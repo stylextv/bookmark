@@ -10,8 +10,8 @@
   <a href="https://GitHub.com/StylexTV/Bookmark/stargazers/">
     <img alt="stars" src="https://img.shields.io/github/stars/StylexTV/Bookmark.svg?color=ffdd00"/>
   </a>
-  <a href="https://www.codacy.com/gh/StylexTV/Milotic/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=StylexTV/Milotic&amp;utm_campaign=Badge_Grade">
-    <img alt="Codacy Badge" src="https://app.codacy.com/project/badge/Grade/06bf8aba945f45c6b8b3e906fe8f49ba"/>
+  <a href="https://www.codacy.com/gh/StylexTV/Bookmark/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=StylexTV/Bookmark&amp;utm_campaign=Badge_Grade">
+    <img alt="Codacy Badge" src="https://app.codacy.com/project/badge/Grade/5225bdf319a24949a9b25ad42a839c38"/>
   </a>
   <a>
     <img alt="Code size" src="https://img.shields.io/github/languages/code-size/StylexTV/Bookmark.svg"/>
