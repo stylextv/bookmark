@@ -65,7 +65,6 @@ public class AudioUtil {
 			
 			if(side == PieceCode.WHITE) play(WHITE_CAPTURE);
 			else play(BLACK_CAPTURE);
-			
 		}
 	}
 	

@@ -15,7 +15,7 @@ public class AlphaBetaAI {
 	
 	private static final int INFINITY = 100000;
 	
-	private static final int MAX_DEPTH = 5; // 6
+	private static final int MAX_DEPTH = 6; // 6
 	private static final int MAX_QUIESCE_DEPTH = 27; // 27
 	private static final int MAX_CHECKING_MOVES_DEPTH = 17; // 17
 	
