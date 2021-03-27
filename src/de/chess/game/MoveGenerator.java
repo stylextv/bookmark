@@ -19,7 +19,10 @@ public class MoveGenerator {
 	};
 	
 	public static void generateAllMoves(Board b, MoveList list) {
-		int side = b.getSide();
+		generateAllMoves(b, b.getSide(), list);
+	}
+	
+	public static void generateAllMoves(Board b, int side, MoveList list) {
 		int facing = 1;
 		int opponentSide = (side + 1) % 2;
 		

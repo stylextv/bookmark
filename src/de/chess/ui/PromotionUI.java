@@ -16,7 +16,7 @@ public class PromotionUI {
 	
 	private static final int SHADOW_MARGIN = 80;
 	
-	private static final BufferedImage BUFFER = new BufferedImage(72 + SHADOW_MARGIN, 288 + SHADOW_MARGIN, BufferedImage.TYPE_INT_ARGB);
+	private static final BufferedImage BUFFER = new BufferedImage(Constants.TILE_SIZE + SHADOW_MARGIN, Constants.TILE_SIZE * 4 + SHADOW_MARGIN, BufferedImage.TYPE_INT_ARGB);
 	private static final Graphics2D BUFFER_GRAPHICS = (Graphics2D) BUFFER.getGraphics();
 	
 	private static final int[] TYPES = new int[] {
@@ -47,14 +47,8 @@ public class PromotionUI {
 		
 		BUFFER_GRAPHICS.drawImage(ImageUtil.PROMOTION_SHADOW, 0, 2, null);
 		
-		BUFFER_GRAPHICS.setColor(Constants.COLOR_UI_LIGHT);
-		BUFFER_GRAPHICS.fillRect(off, off, width, height);
-		
-		if(hoveringBox != -1) {
-			BUFFER_GRAPHICS.setColor(Constants.COLOR_BLUE);
-			
-			BUFFER_GRAPHICS.fillRect(off, off + hoveringBox * Constants.TILE_SIZE, Constants.TILE_SIZE, Constants.TILE_SIZE);
-		}
+		BUFFER_GRAPHICS.setColor(Constants.COLOR_WHITE);
+		BUFFER_GRAPHICS.fillRoundRect(off, off, width, height, 6, 6);
 		
 		for(int i=0; i<TYPES.length; i++) {
 			int type = TYPES[i];
@@ -91,8 +85,8 @@ public class PromotionUI {
 	private static void drawDropDown(Graphics2D graphics) {
 		BufferedImage image = generate(state, isHoveringBox(UIManager.getMouseX(), UIManager.getMouseY(), UIManager.getWidth(), UIManager.getHeight()));
 		
-		float x = (UIManager.getWidth() - Constants.BOARD_SIZE - SHADOW_MARGIN) / 2 + offset * Constants.TILE_SIZE;
-		float y = (UIManager.getHeight() - Constants.BOARD_SIZE - SHADOW_MARGIN) / 2;
+		float x = 66 - SHADOW_MARGIN / 2 + offset * Constants.TILE_SIZE;
+		float y = 66 - SHADOW_MARGIN / 2;
 		
 		x = x - (1 - state) * 20;
 		
@@ -108,8 +102,8 @@ public class PromotionUI {
 	}
 	
 	public static int isHoveringBox(int mx, int my, int width, int height) {
-		int x = (width - Constants.BOARD_SIZE) / 2 + offset * Constants.TILE_SIZE;
-		int y = (height - Constants.BOARD_SIZE) / 2;
+		int x = 66 + offset * Constants.TILE_SIZE;
+		int y = 66;
 		
 		x = x - (int) ((1 - state) * 20);
 		

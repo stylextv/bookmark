@@ -1,11 +1,12 @@
 package de.chess.game;
 
-import de.chess.ai.MinimaxAI;
+import de.chess.ai.AlphaBetaAI;
 import de.chess.ai.OpeningBook;
 import de.chess.ai.OpeningPosition;
 
 public class Board {
 	
+	// sebastian pawn endgame: 8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1
 	private static final String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 	
 	private BitBoard[] bitBoards = new BitBoard[PieceCode.LAST + 1];
@@ -49,7 +50,13 @@ public class Board {
 //		
 //		countPieces();
 //		
-//		System.out.println(Evaluator.evalEarlyQueenDevelopment(this, PieceCode.BLACK));
+////		int endgameWeight = getEndgameWeight();
+////		int normalWeight = 256 - endgameWeight;
+//		
+////		long occupiedSquares = getBitBoard(PieceCode.WHITE).orReturn(getBitBoard(PieceCode.BLACK));
+//		
+//		System.out.println(Evaluator.evalPassingPawns(this, PieceCode.WHITE));
+//		System.out.println(Evaluator.evalPassingPawns(this, PieceCode.BLACK));
 	}
 	
 	public void parseFen(String fen) {
@@ -391,7 +398,7 @@ public class Board {
 			return m;
 		}
 		
-		Move m = MinimaxAI.findNextMove(this);
+		Move m = AlphaBetaAI.findNextMove(this);
 		
 		makeMove(m);
 		

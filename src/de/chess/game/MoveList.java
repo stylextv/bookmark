@@ -1,7 +1,5 @@
 package de.chess.game;
 
-import de.chess.ai.MoveEvaluator;
-
 public class MoveList {
 	
 	private Move[] moves;
@@ -35,6 +33,11 @@ public class MoveList {
 		count++;
 	}
 	
+	public void addMove(Move m) {
+		moves[count] = m;
+		count++;
+	}
+	
 	public Move getMove(int i) {
 		return moves[i];
 	}
@@ -47,14 +50,14 @@ public class MoveList {
 		return picked < count;
 	}
 	
-	public void applyBestMove(Move best) {
-		int hash = best.getHash();
+	public void applyMoveScore(Move move, int score) {
+		int hash = move.getHash();
 		
 		for(int i=0; i<count; i++) {
 			Move m = moves[i];
 			
 			if(m.getHash() == hash) {
-				m.setScore(MoveEvaluator.SCORE_BEST_MOVE);
+				if(m.getScore() < score) m.setScore(score);
 				
 				break;
 			}

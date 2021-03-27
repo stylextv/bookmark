@@ -15,6 +15,7 @@ public class Ray {
 	
 	static {
 		for(int square = 0; square < 64; square++) {
+			
 			RAYS[NORTH][square] = 0x0101010101010100l << square;
 			
 			RAYS[SOUTH][square] = 0x0080808080808080l >>> (63 - square);

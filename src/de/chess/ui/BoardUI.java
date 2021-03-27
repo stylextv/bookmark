@@ -7,6 +7,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
+import de.chess.audio.AudioUtil;
 import de.chess.game.Board;
 import de.chess.game.Move;
 import de.chess.game.MoveFlag;
@@ -16,13 +17,15 @@ import de.chess.game.PieceCode;
 import de.chess.game.Winner;
 import de.chess.main.Constants;
 import de.chess.main.Main;
-import de.chess.sound.SoundUtil;
 import de.chess.util.ImageUtil;
 import de.chess.util.MathUtil;
 
 public class BoardUI {
 	
-	public static int humanSide = PieceCode.WHITE;
+	private static final float ANIMATION_SPEED = 0.04f;
+	private static final float ANIMATION_CUTOFF = 0.25f;
+	
+	private static int humanSide = MathUtil.RANDOM.nextInt(2);
 	
 	private static Move lastMove;
 	private static double lastMoveState;
@@ -44,7 +47,7 @@ public class BoardUI {
 		if(lastMove != null) {
 			
 			if(lastMoveState < 1) {
-				lastMoveState += 0.04f;
+				lastMoveState += ANIMATION_SPEED;
 			} else {
 				lastMoveState = 1;
 			}
@@ -58,7 +61,7 @@ public class BoardUI {
 			lastMove = board.makeAIMove();
 			lastMoveState = 0;
 			
-			SoundUtil.playMoveSound(lastMove, side);
+			AudioUtil.playMoveSound(lastMove, side);
 			
 			checkForWinner(board);
 		}
@@ -78,7 +81,7 @@ public class BoardUI {
 					
 					checkForWinner(board);
 					
-					SoundUtil.playMoveSound(lastMove, board.getSide());
+					AudioUtil.playMoveSound(lastMove, board.getSide());
 					
 					lastHumanMove = System.currentTimeMillis();
 				}
@@ -94,8 +97,8 @@ public class BoardUI {
 				return;
 			}
 			
-			int mx = mouseClick.x - UIManager.getWidth()/2 + Constants.BOARD_SIZE/2;
-			int my = mouseClick.y - UIManager.getHeight()/2 + Constants.BOARD_SIZE/2;
+			int mx = mouseClick.x - 66;
+			int my = mouseClick.y - 66;
 			
 			mouseClick = null;
 			
@@ -138,7 +141,7 @@ public class BoardUI {
 								lastMove = moves[0];
 								lastMoveState = 0;
 								
-								SoundUtil.playMoveSound(moves[0], side);
+								AudioUtil.playMoveSound(moves[0], side);
 								
 								checkForWinner(board);
 								
@@ -191,15 +194,15 @@ public class BoardUI {
 		selected = -1;
 	}
 	
-	public static void drawBoard(Graphics2D graphics, Board board) {
-		graphics.drawImage(ImageUtil.BOARD_SHADOW, (UIManager.getWidth() - ImageUtil.BOARD_SHADOW.getWidth()) / 2, (UIManager.getHeight() - ImageUtil.BOARD_SHADOW.getHeight()) / 2 - 30 / 2 + 2, null);
+	public static void drawBoard(Graphics2D graphics, Board board, int x, int y) {
+		BufferedImage image = ImageUtil.BOARD_WHITE_SIDE;
 		
-		drawFrame(graphics);
+		if(humanSide == PieceCode.BLACK) image = ImageUtil.BOARD_BLACK_SIDE;
 		
-		graphics.drawImage(ImageUtil.BOARD, (UIManager.getWidth() - ImageUtil.BOARD.getWidth()) / 2, (UIManager.getHeight() - ImageUtil.BOARD.getHeight()) / 2, null);
+		graphics.drawImage(image, x, y, null);
 		
-		int offsetX = (UIManager.getWidth() - Constants.BOARD_SIZE) / 2;
-		int offsetY = (UIManager.getHeight() - Constants.BOARD_SIZE) / 2;
+		int offsetX = 66;
+		int offsetY = 66;
 		
 		if(lastMove != null) {
 			int from = lastMove.getFrom();
@@ -220,7 +223,7 @@ public class BoardUI {
 			toX = offsetX + toX * Constants.TILE_SIZE;
 			toY = offsetY + toY * Constants.TILE_SIZE;
 			
-			graphics.setColor(Constants.COLOR_BOARD_LASTMOVE);
+			graphics.setColor(Constants.COLOR_BOARD_HIGHLIGHT);
 			
 			graphics.fillRect(fromX, fromY, Constants.TILE_SIZE, Constants.TILE_SIZE);
 			graphics.fillRect(toX, toY, Constants.TILE_SIZE, Constants.TILE_SIZE);
@@ -235,50 +238,42 @@ public class BoardUI {
 			
 			int tileSize = Constants.TILE_SIZE;
 			
-			graphics.setColor(Constants.COLOR_BOARD_SELECT);
+			graphics.setColor(Constants.COLOR_BOARD_HIGHLIGHT);
 			
 			graphics.fillRect(offsetX + (square % 8) * tileSize, offsetY + (square / 8) * tileSize, tileSize, tileSize);
 		}
 		
-		for(int x=0; x<8; x++) {
-			for(int y=0; y<8; y++) {
-				int i = y * 8 + x;
+		for(int cx=0; cx<8; cx++) {
+			for(int cy=0; cy<8; cy++) {
+				int i = cy * 8 + cx;
 				
 				int p = board.getPiece(i);
 				
-				if(p != -1) drawPiece(graphics, p, x, y, offsetX, offsetY);
+				if(p != -1) drawPiece(graphics, p, cx, cy, offsetX, offsetY);
+			}
+		}
+		
+		if(lastMove != null && lastMoveState != 1) {
+			
+			drawMovingPiece(graphics, board, lastMove.getFrom(), lastMove.getTo(), offsetX, offsetY);
+			
+			if(lastMove.getFlag() == MoveFlag.CASTLING_QUEEN_SIDE) {
+				
+				int rookY = lastMove.getTo() / 8;
+				
+				drawMovingPiece(graphics, board, 0, rookY, 3, rookY, offsetX, offsetY);
+				
+			} else if(lastMove.getFlag() == MoveFlag.CASTLING_KING_SIDE) {
+				
+				int rookY = lastMove.getTo() / 8;
+				
+				drawMovingPiece(graphics, board, 7, rookY, 5, rookY, offsetX, offsetY);
 			}
 		}
 	}
 	
-	public static void drawFrame(Graphics2D graphics) {
-		int frameSize = 12;
-		
-		int upperHeight = 42;
-		
-		int w = Constants.BOARD_SIZE + frameSize * 2;
-		
-		int x = (UIManager.getWidth() - w) / 2;
-		
-		int y = (UIManager.getHeight() - w) / 2 - upperHeight + frameSize;
-		
-		graphics.setColor(Constants.COLOR_UI);
-		
-		graphics.fillRect(x, y, w, w - frameSize + upperHeight);
-		
-		int height = upperHeight - 2;
-		
-		int circleSize = 12;
-		
-		graphics.setColor(Constants.COLOR_GREEN);
-		
-		graphics.fillArc(x + 14, y + height / 2 - circleSize / 2, 12, 12, 0, 360);
-		
-		graphics.setColor(Constants.COLOR_TEXT_GREY);
-		
-		graphics.setFont(Constants.FONT_REGULAR);
-		
-		graphics.drawString(Constants.NAME + " (" + Constants.ELO + ")", x + 14 + circleSize + 9, y + height / 2 + graphics.getFontMetrics().getHeight() / 4 + 1);
+	public static void drawBoardCorners(Graphics2D graphics, int x, int y) {
+		graphics.drawImage(ImageUtil.BOARD_CORNERS, x, y, null);
 	}
 	
 	private static void drawPiece(Graphics2D graphics, int p, int x, int y, int offX, int offY) {
@@ -299,23 +294,8 @@ public class BoardUI {
 			}
 		} else if(lastMove != null && lastMoveState != 1) {
 			
-			if(lastMove.getTo() == index) {
-				
-				pos1X = lastMove.getFrom() % 8;
-				pos1Y = lastMove.getFrom() / 8;
-				pos2X = x;
-				pos2Y = y;
-				
-			} else if(y == lastMove.getTo() / 8 && ((lastMove.getFlag() == MoveFlag.CASTLING_QUEEN_SIDE && x == 3) || (lastMove.getFlag() == MoveFlag.CASTLING_KING_SIDE && x == 5))) {
-				
-				int fromX = 0;
-				
-				if(lastMove.getFlag() == MoveFlag.CASTLING_KING_SIDE) fromX = 7;
-				
-				pos1X = fromX;
-				pos1Y = lastMove.getFrom() / 8;
-				pos2X = x;
-				pos2Y = y;
+			if(lastMove.getTo() == index || (y == lastMove.getTo() / 8 && ((lastMove.getFlag() == MoveFlag.CASTLING_QUEEN_SIDE && x == 3) || (lastMove.getFlag() == MoveFlag.CASTLING_KING_SIDE && x == 5)))) {
+				return;
 			}
 		}
 		
@@ -336,16 +316,21 @@ public class BoardUI {
 		
 		if(pos2X == -1) {
 			
-			graphics.drawImage(sprite, pos1X, pos1Y, null);
+			graphics.drawImage(sprite, pos1X, pos1Y, Constants.TILE_SIZE, Constants.TILE_SIZE, null);
 			
 		} else {
 			pos2X = offX + pos2X * Constants.TILE_SIZE;
 			pos2Y = offY + pos2Y * Constants.TILE_SIZE;
 			
-			double d = MathUtil.sigmoidCutOff(lastMoveState, 0.25f);
+			double d = MathUtil.sigmoidCutOff(lastMoveState, ANIMATION_CUTOFF);
 			
 			AffineTransform trans = new AffineTransform();
+			
 			trans.translate(pos1X+(pos2X-pos1X)*d, pos1Y+(pos2Y-pos1Y)*d);
+			
+			float f = (float) Constants.TILE_SIZE / sprite.getWidth(); 
+			
+			trans.scale(f, f);
 			
 			graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 			
@@ -353,6 +338,46 @@ public class BoardUI {
 			
 			graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 		}
+	}
+	
+	private static void drawMovingPiece(Graphics2D graphics, Board b, int from, int to, int offX, int offY) {
+		drawMovingPiece(graphics, b, from % 8, from / 8, to % 8, to / 8, offX, offY);
+	}
+	
+	private static void drawMovingPiece(Graphics2D graphics, Board b, int x1, int y1, int x2, int y2, int offX, int offY) {
+		int p = b.getPiece(y2 * 8 + x2);
+		
+		if(humanSide == PieceCode.BLACK) {
+			x1 = 7 - x1;
+			y1 = 7 - y1;
+			
+			x2 = 7 - x2;
+			y2 = 7 - y2;
+		}
+		
+		x1 = offX + x1 * Constants.TILE_SIZE;
+		y1 = offY + y1 * Constants.TILE_SIZE;
+		
+		x2 = offX + x2 * Constants.TILE_SIZE;
+		y2 = offY + y2 * Constants.TILE_SIZE;
+		
+		BufferedImage sprite = PieceCode.getSprite(p);
+		
+		double d = MathUtil.sigmoidCutOff(lastMoveState, ANIMATION_CUTOFF);
+		
+		AffineTransform trans = new AffineTransform();
+		
+		trans.translate(x1+(x2-x1)*d, y1+(y2-y1)*d);
+		
+		float f = (float) Constants.TILE_SIZE / sprite.getWidth(); 
+		
+		trans.scale(f, f);
+		
+		graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+		
+		graphics.drawImage(sprite, trans, null);
+		
+		graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 	}
 	
 	public static void onMouseClick(Point p) {

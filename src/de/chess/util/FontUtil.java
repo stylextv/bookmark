@@ -11,8 +11,8 @@ public class FontUtil {
 		try {
 			GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 			
-			loadFont(ge, "NotoSans-Regular.ttf");
-			loadFont(ge, "Roboto-Regular.ttf");
+			loadFont(ge, "Montserrat-ExtraBold.ttf");
+			loadFont(ge, "SegoeUI_Light.ttf");
 			
 		} catch (Exception ex) {
 			ex.printStackTrace();

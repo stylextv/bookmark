@@ -7,7 +7,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 
-import de.chess.game.PieceCode;
 import de.chess.game.Winner;
 import de.chess.main.Constants;
 import de.chess.util.ImageUtil;
@@ -17,17 +16,14 @@ public class PopupUI {
 	
 	private static final int SHADOW_MARGIN = 80;
 	
-	private static final BufferedImage BUFFER = new BufferedImage(400 + SHADOW_MARGIN, 300 + SHADOW_MARGIN, BufferedImage.TYPE_INT_ARGB);
+	private static final BufferedImage BUFFER = new BufferedImage(280 + SHADOW_MARGIN, 160 + SHADOW_MARGIN, BufferedImage.TYPE_INT_ARGB);
 	private static final Graphics2D BUFFER_GRAPHICS = (Graphics2D) BUFFER.getGraphics();
 	
-	private static float state = 1;
+	private static float state;
 	
 	private static int displayWinner = Winner.NONE;
 	
-	private static boolean initialOpen = true;
-	
-	private static float whiteButtonState;
-	private static float blackButtonState;
+	private static boolean closed;
 	
 	static {
 		BUFFER_GRAPHICS.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -36,9 +32,6 @@ public class PopupUI {
 	}
 	
 	public static BufferedImage generate(String title, float alpha) {
-		whiteButtonState = MathUtil.lerp(whiteButtonState, isHoveringButton(true, UIManager.getMouseX(), UIManager.getMouseY(), UIManager.getWidth(), UIManager.getHeight()) ? 1 : 0, 0.3f);
-		blackButtonState = MathUtil.lerp(blackButtonState, isHoveringButton(false, UIManager.getMouseX(), UIManager.getMouseY(), UIManager.getWidth(), UIManager.getHeight()) ? 1 : 0, 0.3f);
-		
 		BUFFER_GRAPHICS.clearRect(0, 0, BUFFER.getWidth(), BUFFER.getHeight());
 		
 		int width = BUFFER.getWidth() - SHADOW_MARGIN;
@@ -48,32 +41,17 @@ public class PopupUI {
 		
 		BUFFER_GRAPHICS.drawImage(ImageUtil.POPUP_SHADOW, 0, 2, null);
 		
-		BUFFER_GRAPHICS.setColor(Constants.COLOR_UI);
+		BUFFER_GRAPHICS.setColor(Constants.COLOR_WHITE);
 		BUFFER_GRAPHICS.fillRoundRect(off, off, width, height, 4, 4);
 		
-		BUFFER_GRAPHICS.setColor(Constants.COLOR_TEXT_GREY);
-		BUFFER_GRAPHICS.setFont(Constants.FONT_TITLE);
+		BUFFER_GRAPHICS.setColor(Constants.COLOR_TEXT_DARK_GREY);
+		BUFFER_GRAPHICS.setFont(Constants.FONT_EXTRA_BOLD_LARGE);
 		
-		BUFFER_GRAPHICS.drawString(title, off + width/2 - BUFFER_GRAPHICS.getFontMetrics().stringWidth(title)/2, off + height/2 - 48);
+		BUFFER_GRAPHICS.drawString(title, off + width/2 - BUFFER_GRAPHICS.getFontMetrics().stringWidth(title)/2, off + height/2 + 9);
 		
-//		int j = Constants.BRIGHTNESS_BLACK;
-//		
-//		BUFFER_GRAPHICS.setColor(new Color(j, j, j, 255 - (int) (32 * buttonState)));
-//		BUFFER_GRAPHICS.fillRoundRect(off + width/2 - BUTTON_WIDTH/2, off + height/2 + 10, BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_HEIGHT, BUTTON_HEIGHT);
-//		
-//		BUFFER_GRAPHICS.setColor(Constants.COLOR_WHITE);
-//		BUFFER_GRAPHICS.setFont(Constants.FONT_REGULAR);
-//		
-//		String text = "Nochmal";
-//		
-//		BUFFER_GRAPHICS.drawString(text, off + width/2 - BUFFER_GRAPHICS.getFontMetrics().stringWidth(text)/2, off + height/2 + 10 + BUTTON_HEIGHT/2 + BUFFER_GRAPHICS.getFontMetrics().getHeight()/5 + 1);
+		int dis = 12;
 		
-		int buttonY = 140;
-		
-		int buttonDis = 84 / 2 + 16;
-		
-		drawColorButton(PieceCode.WHITE, off + width / 2 - buttonDis - 84 / 2, off + buttonY, 84, whiteButtonState);
-		drawColorButton(PieceCode.BLACK, off + width / 2 + buttonDis - 84 / 2, off + buttonY, 84, blackButtonState);
+		BUFFER_GRAPHICS.drawImage(ImageUtil.CLOSE_BUTTON, off + width - dis - ImageUtil.CLOSE_BUTTON.getWidth(), off + dis, null);
 		
 		DataBuffer data = BUFFER.getRaster().getDataBuffer();
 		
@@ -91,26 +69,6 @@ public class PopupUI {
 		return BUFFER;
 	}
 	
-	private static void drawColorButton(int side, int x, int y, int size, float state) {
-		BufferedImage image = PieceCode.getSprite(PieceCode.getSpriteCode(side, PieceCode.KING));
-		
-		int r = Constants.COLOR_UI_LIGHTER.getRed();
-		int g = Constants.COLOR_UI_LIGHTER.getGreen();
-		int b = Constants.COLOR_UI_LIGHTER.getBlue();
-		
-		state = state * 0.2f;
-		
-		r += r * state;
-		g += g * state;
-		b += b * state;
-		
-		BUFFER_GRAPHICS.setColor(new Color(r, g, b));
-		
-		BUFFER_GRAPHICS.fillRoundRect(x, y, size, size, 8, 8);
-		
-		BUFFER_GRAPHICS.drawImage(image, x + (size - image.getWidth()) / 2, y + (size - image.getHeight()) / 2, null);
-	}
-	
 	public static void updatePopup(Graphics2D graphics) {
 		boolean show = isActive();
 		
@@ -119,24 +77,20 @@ public class PopupUI {
 		if(state > 0.005f) {
 			String s;
 			
-			if(displayWinner == Winner.NONE) s = "Wähle eine Farbe";
-			else if(displayWinner == Winner.DRAW) s = "Unentschieden";
+			if(displayWinner == Winner.DRAW) s = "Unentschieden";
 			else s = displayWinner == BoardUI.getHumanSide() ? "Sieg" : "Niederlage";
 			
 			drawPopup(graphics, s);
 		} else {
 			state = 0;
-			
-			whiteButtonState = 0;
-			blackButtonState = 0;
 		}
 	}
 	
 	private static void drawPopup(Graphics2D graphics, String title) {
 		BufferedImage image = generate(title, state);
 		
-		float x = (UIManager.getWidth() - image.getWidth()) / 2;
-		float y = (UIManager.getHeight() - image.getHeight()) / 2;
+		float x = 66 + (Constants.BOARD_SIZE - image.getWidth()) / 2;
+		float y = 66 + (Constants.BOARD_SIZE - image.getHeight()) / 2;
 		
 		x = x - (1 - state) * 40;
 		
@@ -152,37 +106,47 @@ public class PopupUI {
 	}
 	
 	public static boolean isActive() {
-		return (BoardUI.getWinner() != Winner.NONE && BoardUI.getLastMoveState() == 1) || initialOpen;
+		return BoardUI.getWinner() != Winner.NONE && BoardUI.getLastMoveState() == 1 && !closed;
 	}
 	
-	public static boolean isHoveringButton(boolean left, int mx, int my, int width, int height) {
-		int buttonDis = 84 / 2 + 16;
+	public static boolean isHoveringCloseButton(int mx, int my, int width, int height) {
+		int x = 66 + (Constants.BOARD_SIZE - BUFFER.getWidth()) / 2;
+		int y = 66 + (Constants.BOARD_SIZE - BUFFER.getHeight()) / 2;
 		
-		int x = width / 2 + (left ? -buttonDis : buttonDis) - 84 / 2;
-		int y = height / 2 - BUFFER.getHeight() / 2 + SHADOW_MARGIN / 2 + 140;
+		int w = BUFFER.getWidth() - SHADOW_MARGIN;
+		
+		int off = SHADOW_MARGIN / 2;
+		
+		int dis = 12;
+		int margin = 6;
+		
+		int l = ImageUtil.CLOSE_BUTTON.getWidth();
+		
+		x += off + w - dis - l - margin;
+		y += off + dis - margin;
 		
 		x = x - (int) ((1 - state) * 40);
 		
 		x = mx - x;
 		y = my - y;
 		
-		return x >= 0 && y>= 0 && x < 84 && y < 84;
+		int size = l + margin * 2;
+		
+		return x >= 0 && y>= 0 && x < size && y < size;
+	}
+	
+	public static void close() {
+		closed = true;
 	}
 	
 	public static void setDisplayedWinner(int w) {
+		closed = false;
+		
 		displayWinner = w;
 	}
 	
 	public static float getState() {
 		return state;
-	}
-	
-	public static boolean isInitiallyOpen() {
-		return initialOpen;
-	}
-	
-	public static void clearInitialOpen() {
-		initialOpen = false;
 	}
 	
 }

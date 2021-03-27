@@ -1,9 +1,9 @@
 package de.chess.main;
 
 import de.chess.ai.OpeningBook;
+import de.chess.audio.AudioUtil;
 import de.chess.game.Board;
 import de.chess.game.LookupTable;
-import de.chess.sound.SoundUtil;
 import de.chess.ui.UIManager;
 import de.chess.util.FontUtil;
 import de.chess.util.ImageUtil;
@@ -24,7 +24,7 @@ public class Main {
 			
 			FontUtil.load();
 			
-			SoundUtil.load();
+			AudioUtil.load();
 			
 			board = new Board();
 			

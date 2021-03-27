@@ -10,6 +10,9 @@ import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
 
+import com.github.weisj.darklaf.LafManager;
+import com.github.weisj.darklaf.theme.Theme;
+
 import de.chess.main.Constants;
 import de.chess.main.Main;
 import de.chess.render.Renderer;
@@ -28,8 +31,7 @@ public class Window {
 		this.frame = new JFrame(Constants.NAME);
 		this.renderer = new Renderer();
 		
-		this.frame.setSize(width, height);
-		this.frame.setMinimumSize(new Dimension(width - 80, height - 80));
+		frame.setSize(width, height);
 		
 		frame.setIconImages(ImageUtil.ICONS);
 		
@@ -77,6 +79,8 @@ public class Window {
 		
 		frame.add(renderer);
 		
+		frame.setResizable(false);
+		
 		frame.setVisible(true);
 	}
 	
@@ -100,6 +104,10 @@ public class Window {
 	
 	public Point getMousePosition() {
 		return renderer.getMousePosition();
+	}
+	
+	public static void installTheme(Theme theme) {
+		LafManager.install(theme);
 	}
 	
 }

@@ -12,14 +12,14 @@ public class MoveIndicatorUI {
 	
 	public static void drawMoves(Graphics2D graphics, Board b) {
 		if(BoardUI.getSelectedPiece() != -1) {
-			int ox = UIManager.getWidth() / 2 - Constants.BOARD_SIZE / 2;
-			int oy = UIManager.getHeight() / 2 - Constants.BOARD_SIZE / 2;
+			int ox = 66;
+			int oy = 66;
 			
 			int previous = -1;
 			
 			int tileSize = Constants.TILE_SIZE;
 			
-			graphics.setColor(Constants.COLOR_BOARD_SELECT);
+			graphics.setColor(Constants.COLOR_BOARD_MARKER);
 			
 			for(Move m : BoardUI.getSelectedMoves()) {
 				int to = m.getTo();
@@ -40,7 +40,7 @@ public class MoveIndicatorUI {
 				if(isAttack) {
 					graphics.drawImage(ImageUtil.ATTACK_INDICATOR, ox + toX * tileSize, oy + toY * tileSize, null);
 				} else {
-					graphics.fillArc(ox + toX * tileSize + tileSize / 2 - 10, oy + toY * tileSize + tileSize / 2 - 10, 20, 20, 0, 360);
+					graphics.fillArc(ox + toX * tileSize + tileSize / 2 - 12, oy + toY * tileSize + tileSize / 2 - 12, 24, 24, 0, 360);
 				}
 			}
 		}

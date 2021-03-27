@@ -4,11 +4,14 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
 
+import com.github.weisj.darklaf.theme.DarculaTheme;
+
 import de.chess.game.PieceCode;
 import de.chess.game.Winner;
 import de.chess.io.Window;
 import de.chess.main.Constants;
 import de.chess.main.Main;
+import de.chess.util.MathUtil;
 
 public class UIManager {
 	
@@ -24,6 +27,9 @@ public class UIManager {
 	
 	public static void createWindow() {
 		window = new Window(Constants.WINDOW_DEFAULT_WIDTH + 16, Constants.WINDOW_DEFAULT_HEIGHT + 39);
+		
+		Window.installTheme(new DarculaTheme());
+		
 		window.create();
 	}
 	
@@ -48,9 +54,13 @@ public class UIManager {
 		graphics.setColor(Constants.COLOR_BACKGROUND);
 		graphics.fillRect(0, 0, width, height);
 		
-		BoardUI.drawBoard(graphics, Main.getBoard());
+		WidgetUI.drawWidgets(graphics);
+		
+		BoardUI.drawBoard(graphics, Main.getBoard(), 66, 66);
 		
 		MoveIndicatorUI.drawMoves(graphics, Main.getBoard());
+		
+		BoardUI.drawBoardCorners(graphics, 66, 66);
 		
 		PromotionUI.updateDropDown(graphics);
 		
@@ -58,25 +68,42 @@ public class UIManager {
 	}
 	
 	public static void onMouseClick(Point p, int type) {
-		if(type == Window.MOUSE_PRESSED && !PopupUI.isInitiallyOpen()) BoardUI.onMouseClick(p);
+		if(type == Window.MOUSE_PRESSED) BoardUI.onMouseClick(p);
 		
-		if(PopupUI.isActive() && type == Window.MOUSE_RELEASED) {
+		if(type == Window.MOUSE_RELEASED) {
+			if(PopupUI.isActive()) {
+				if(PopupUI.isHoveringCloseButton(p.x, p.y, width, height)) {
+					
+					PopupUI.close();
+					
+					return;
+				}
+			}
 			
-			boolean b1 = PopupUI.isHoveringButton(true, p.x, p.y, width, height);
-			boolean b2 = PopupUI.isHoveringButton(false, p.x, p.y, width, height);
+			int i = WidgetUI.isHoveringSelectionButton(p.x, p.y);
 			
-			if(b1 || b2) {
+			if(i != -1) {
+				WidgetUI.setSideSelection(i);
 				
-				if(b1) BoardUI.setHumanSide(PieceCode.WHITE);
-				else BoardUI.setHumanSide(PieceCode.BLACK);
+				int j;
 				
-				BoardUI.clearLastMove();
+				if(i == 0) j = MathUtil.RANDOM.nextInt(2);
+				else if(i == 1) j = PieceCode.WHITE;
+				else j = PieceCode.BLACK;
 				
-				if(!PopupUI.isInitiallyOpen()) Main.getBoard().reset();
+				int ply = Main.getBoard().getHistoryPly();
 				
-				PopupUI.clearInitialOpen();
-				
-				BoardUI.setWinner(Winner.NONE);
+				if((ply != 0 && (ply != 1 || BoardUI.getHumanSide() == PieceCode.WHITE)) || j != BoardUI.getHumanSide()) {
+					BoardUI.setHumanSide(j);
+					
+					BoardUI.clearLastMove();
+					
+					Main.getBoard().reset();
+					
+					WidgetUI.setPrediction(0);
+					
+					BoardUI.setWinner(Winner.NONE);
+				}
 			}
 		}
 	}

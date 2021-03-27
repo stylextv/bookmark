@@ -10,6 +10,8 @@ public class Move {
 	
 	private int flag;
 	
+	private int hash;
+	
 	private int score;
 	
 	private boolean picked = false;
@@ -22,10 +24,12 @@ public class Move {
 		this.promoted = promoted;
 		
 		this.flag = flag;
+		
+		this.hash = from | (to << 7) | (promoted << 14);
 	}
 	
 	public int getHash() {
-		return from | (to << 7) | (promoted << 14);
+		return hash;
 	}
 	
 	public int getFrom() {

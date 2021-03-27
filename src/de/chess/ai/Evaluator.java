@@ -197,15 +197,29 @@ public class Evaluator {
 		
 		long occupiedSquares = b.getBitBoard(PieceCode.WHITE).orReturn(b.getBitBoard(PieceCode.BLACK));
 		
+//		score += evalMobility(b, PieceCode.WHITE);
+//		score -= evalMobility(b, PieceCode.BLACK);
+		
 		score += evalKingSafety(b, PieceCode.WHITE, normalWeight, occupiedSquares);
 		score -= evalKingSafety(b, PieceCode.BLACK, normalWeight, occupiedSquares);
 		
 		score += evalEarlyQueenDevelopment(b, PieceCode.WHITE, normalWeight);
 		score -= evalEarlyQueenDevelopment(b, PieceCode.BLACK, normalWeight);
 		
+		score += evalPassingPawns(b, PieceCode.WHITE);
+		score -= evalPassingPawns(b, PieceCode.BLACK);
+		
 		if(b.getSide() == PieceCode.WHITE) return score;
 		return -score;
 	}
+	
+//	private static int evalMobility(Board b, int side) {
+//		MoveList list = new MoveList();
+//		
+//		MoveGenerator.generateAllMoves(b, side, list);
+//		
+//		return list.getCount() * 2;
+//	}
 	
 	private static int evalKingSafety(Board b, int side, int normalWeight, long occupiedSquares) {
 		int safety = 0;
@@ -391,7 +405,9 @@ public class Evaluator {
 	}
 	
 	private static int evalEarlyQueenDevelopment(Board b, int side, int normalWeight) {
-		if(normalWeight == 0) return 0;
+		int weight = (normalWeight - 128) * 2;
+		
+		if(weight <= 0) return 0;
 		
 		int code = PieceCode.getSpriteCode(side, PieceCode.QUEEN);
 		
@@ -415,10 +431,84 @@ public class Evaluator {
 				
 				if(dis > 4) dis = 4;
 				
-				return -(count * 5 * dis / 4 * normalWeight) / 256;
+				return -(count * 5 * dis / 4 * weight) / 256;
 			}
 		}
 		return 0;
+	}
+	
+	private static int evalPassingPawns(Board b, int side) {
+		int score = 0;
+		
+		int opponentSide = (side + 1) % 2;
+		
+		int code = PieceCode.getSpriteCode(side, PieceCode.PAWN);
+		int opponentCode = PieceCode.getSpriteCode(opponentSide, PieceCode.PAWN);
+		
+		int targetY = 7;
+		
+		if(side == PieceCode.WHITE) targetY = 0;
+		
+		int[] opponentDefence = new int[8];
+		boolean hasOpponentDefence = false;
+		
+		int l = b.getPieceAmount(code);
+		
+		for(int i=0; i<l; i++) {
+			int square = b.getPieceIndex(code, i);
+			
+			int y = square / 8;
+			
+			int disToTarget = y - targetY;
+			if(disToTarget < 0) disToTarget = -disToTarget;
+			
+			if(!hasOpponentDefence) {
+				for(int j=0; j<opponentDefence.length; j++) {
+					opponentDefence[j] = -1;
+				}
+				
+				int l2 = b.getPieceAmount(opponentCode);
+				
+				for(int j=0; j<l2; j++) {
+					int defendingSquare = b.getPieceIndex(opponentCode, j);
+					
+					int defendingX = defendingSquare % 8;
+					int defendingY = defendingSquare / 8;
+					
+					int otherY = opponentDefence[defendingX];
+					
+					if(otherY == -1 || (side == PieceCode.WHITE ? defendingY < otherY : defendingY > otherY)) {
+						opponentDefence[defendingX] = defendingY;
+					}
+				}
+			}
+			
+			int x = square % 8;
+			
+			boolean passing = true;
+			
+			for(int j=-1; j<=1; j++) {
+				int checkX = x + j;
+				
+				if(checkX >= 0 && checkX < 8) {
+					int defenceY = opponentDefence[checkX];
+					
+					boolean free = defenceY == -1 || (side == PieceCode.WHITE ? y <= defenceY : y >= defenceY);
+					
+					if(!free) {
+						passing = false;
+						break;
+					}
+				}
+			}
+			
+			if(passing) {
+				int m = 7 - disToTarget;
+				
+				score += 8 + 2 * m;
+			}
+		}
+		return score;
 	}
 	
 	public static int getPieceValue(int type) {
