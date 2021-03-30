@@ -1,6 +1,5 @@
 package de.chess.ui;
 
-import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
@@ -9,6 +8,7 @@ import java.awt.image.DataBuffer;
 
 import de.chess.game.Winner;
 import de.chess.main.Constants;
+import de.chess.util.ColorUtil;
 import de.chess.util.ImageUtil;
 import de.chess.util.MathUtil;
 
@@ -28,7 +28,7 @@ public class PopupUI {
 	static {
 		BUFFER_GRAPHICS.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		
-		BUFFER_GRAPHICS.setBackground(new Color(0, 0, 0, 0));
+		BUFFER_GRAPHICS.setBackground(ColorUtil.TRANSPARENT);
 	}
 	
 	public static BufferedImage generate(String title, float alpha) {
@@ -41,17 +41,18 @@ public class PopupUI {
 		
 		BUFFER_GRAPHICS.drawImage(ImageUtil.POPUP_SHADOW, 0, 2, null);
 		
-		BUFFER_GRAPHICS.setColor(Constants.COLOR_WHITE);
+		BUFFER_GRAPHICS.setColor(Constants.COLOR_MENU_BACKGROUND);
 		BUFFER_GRAPHICS.fillRoundRect(off, off, width, height, 4, 4);
 		
-		BUFFER_GRAPHICS.setColor(Constants.COLOR_TEXT_DARK_GREY);
+		BUFFER_GRAPHICS.setColor(Constants.COLOR_WHITE);
 		BUFFER_GRAPHICS.setFont(Constants.FONT_EXTRA_BOLD_LARGE);
 		
 		BUFFER_GRAPHICS.drawString(title, off + width/2 - BUFFER_GRAPHICS.getFontMetrics().stringWidth(title)/2, off + height/2 + 9);
 		
-		int dis = 12;
+		int disX = 16;
+		int disY = 12;
 		
-		BUFFER_GRAPHICS.drawImage(ImageUtil.CLOSE_BUTTON, off + width - dis - ImageUtil.CLOSE_BUTTON.getWidth(), off + dis, null);
+		BUFFER_GRAPHICS.drawImage(ImageUtil.CLOSE_BUTTON, off + width - disX - ImageUtil.CLOSE_BUTTON.getWidth(), off + disY, null);
 		
 		DataBuffer data = BUFFER.getRaster().getDataBuffer();
 		
@@ -117,13 +118,15 @@ public class PopupUI {
 		
 		int off = SHADOW_MARGIN / 2;
 		
-		int dis = 12;
-		int margin = 6;
+		int disX = 16;
+		int disY = 12;
+		
+		int margin = 10;
 		
 		int l = ImageUtil.CLOSE_BUTTON.getWidth();
 		
-		x += off + w - dis - l - margin;
-		y += off + dis - margin;
+		x += off + w - disX - l - margin;
+		y += off + disY - margin;
 		
 		x = x - (int) ((1 - state) * 40);
 		

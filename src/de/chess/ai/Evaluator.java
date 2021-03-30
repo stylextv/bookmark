@@ -209,6 +209,8 @@ public class Evaluator {
 		score += evalPassingPawns(b, PieceCode.WHITE);
 		score -= evalPassingPawns(b, PieceCode.BLACK);
 		
+		score += evalCenterPawns(b, normalWeight);
+		
 		if(b.getSide() == PieceCode.WHITE) return score;
 		return -score;
 	}
@@ -506,6 +508,28 @@ public class Evaluator {
 				int m = 7 - disToTarget;
 				
 				score += 8 + 2 * m;
+			}
+		}
+		return score;
+	}
+	
+	private static int evalCenterPawns(Board b, int normalWeight) {
+		int score = 0;
+		
+		int bonus = 3 * normalWeight / 256;
+		
+		for(int x=3; x<5; x++) {
+			for(int y=3; y<5; y++) {
+				
+				int code = b.getPiece(y * 8 + x);
+				
+				if(code != -1 && PieceCode.getTypeFromSpriteCode(code) == PieceCode.PAWN) {
+					
+					int side = PieceCode.getColorFromSpriteCode(code);
+					
+					if(side == PieceCode.WHITE) score += bonus;
+					else score -= bonus;
+				}
 			}
 		}
 		return score;

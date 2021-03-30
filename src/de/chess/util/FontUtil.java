@@ -9,10 +9,11 @@ public class FontUtil {
 	
 	public static void load() {
 		try {
-			GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+			GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
 			
-			loadFont(ge, "Montserrat-ExtraBold.ttf");
-			loadFont(ge, "SegoeUI_Light.ttf");
+			loadFont(env, "Montserrat-ExtraBold.ttf");
+			loadFont(env, "Segoe UI Light.ttf");
+			loadFont(env, "Segoe UI Bold.ttf");
 			
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -21,10 +22,10 @@ public class FontUtil {
 		}
 	}
 	
-	private static void loadFont(GraphicsEnvironment ge, String name) throws FontFormatException, IOException {
+	private static void loadFont(GraphicsEnvironment env, String name) throws FontFormatException, IOException {
 		Font font = Font.createFont(Font.TRUETYPE_FONT, FontUtil.class.getClassLoader().getResourceAsStream("assets/fonts/"+name));
 		
-		ge.registerFont(font);
+		env.registerFont(font);
 	}
 	
 }

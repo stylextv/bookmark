@@ -21,8 +21,6 @@ public class Constants {
 	public static final Color COLOR_BACKGROUND = new Color(0x2B2B2B);
 	public static final Color COLOR_MENU_BACKGROUND = new Color(0x3C3F41);
 	
-	public static final Color COLOR_TEXT_GREY = new Color(0xbababa);
-	public static final Color COLOR_TEXT_DARK_GREY = new Color(0x666463);
 	public static final Color COLOR_TEXT_WHITE_TRANSPARENT = new Color(255, 255, 255, 166);
 	
 	public static final Color COLOR_BUTTON = new Color(0x43494A);
@@ -36,6 +34,7 @@ public class Constants {
 	public static final Color COLOR_PLAYER_BLACK = COLOR_MENU_BACKGROUND;
 	
 	public static final Font FONT_LIGHT = new Font("Segoe UI Light", 0, 18);
+	public static final Font FONT_BOLD = new Font("Segoe UI Bold", 0, 12);
 	public static final Font FONT_EXTRA_BOLD = new Font("Montserrat ExtraBold", 0, 18);
 	public static final Font FONT_EXTRA_BOLD_LARGE = new Font("Montserrat ExtraBold", 0, 24);
 	

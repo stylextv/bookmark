@@ -10,6 +10,11 @@ public class MathUtil {
 	public static final Random RANDOM = new Random();
 	
 	public static final DecimalFormat DECIMAL_FORMAT = (DecimalFormat) NumberFormat.getNumberInstance(Locale.US);
+	public static final DecimalFormat DISPLAY_DECIMAL_FORMAT = (DecimalFormat) NumberFormat.getNumberInstance(Locale.US);
+	
+	static {
+		DISPLAY_DECIMAL_FORMAT.applyPattern("0.0");
+	}
 	
 	public static float sigmoid(float x) {
 		return (1/(1 + (float) Math.pow(Math.E,(-1*(x*16-8)))));

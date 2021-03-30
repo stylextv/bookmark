@@ -390,7 +390,7 @@ public class Board {
 				}
 			}
 			
-			System.out.println("---");
+			System.out.println("------");
 			System.out.println("played move from book: "+m);
 			
 			makeMove(m);

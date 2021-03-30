@@ -1,6 +1,5 @@
 package de.chess.ui;
 
-import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
@@ -9,6 +8,7 @@ import java.awt.image.DataBuffer;
 
 import de.chess.game.PieceCode;
 import de.chess.main.Constants;
+import de.chess.util.ColorUtil;
 import de.chess.util.ImageUtil;
 import de.chess.util.MathUtil;
 
@@ -34,7 +34,7 @@ public class PromotionUI {
 	static {
 		BUFFER_GRAPHICS.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		
-		BUFFER_GRAPHICS.setBackground(new Color(0, 0, 0, 0));
+		BUFFER_GRAPHICS.setBackground(ColorUtil.TRANSPARENT);
 	}
 	
 	public static BufferedImage generate(float alpha, int hoveringBox) {
@@ -47,7 +47,7 @@ public class PromotionUI {
 		
 		BUFFER_GRAPHICS.drawImage(ImageUtil.PROMOTION_SHADOW, 0, 2, null);
 		
-		BUFFER_GRAPHICS.setColor(Constants.COLOR_WHITE);
+		BUFFER_GRAPHICS.setColor(Constants.COLOR_MENU_BACKGROUND);
 		BUFFER_GRAPHICS.fillRoundRect(off, off, width, height, 6, 6);
 		
 		for(int i=0; i<TYPES.length; i++) {
