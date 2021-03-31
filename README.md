@@ -33,9 +33,9 @@ As I work on this project, I will make sure to record the progress I have made.
 
 Date | Version | Elo
 --- | --- | ---
-30.03.21 | alpha 1.1.5 | 2600
-20.03.21 | alpha 1.1.4 | 2550
-20.03.21 | alpha 1.1.3 | 2500
+30.03.21 | alpha 1.1.5 | 2550
+20.03.21 | alpha 1.1.4 | 2500
+20.03.21 | alpha 1.1.3 | 2450
 05.03.21 | alpha 1.1.2 | 2200
 03.03.21 | alpha 1.1.1 | 2050
 27.02.21 | alpha 1.1.0 | ~1900
