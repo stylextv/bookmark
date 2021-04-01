@@ -19,12 +19,12 @@ public class TranspositionEntry {
 	
 	private int age;
 	
-	public TranspositionEntry(long key, int depth, Move m, int type, int score, int age) {
+	public TranspositionEntry(long key, int depth, int plyFromRoot, Move m, int type, int score, int age) {
 		this.key = key;
 		this.depth = depth;
 		this.m = m;
 		this.type = type;
-		this.score = score;
+		this.score = correctMateScore(score, plyFromRoot);
 		this.age = age;
 	}
 	
@@ -44,12 +44,38 @@ public class TranspositionEntry {
 		return type;
 	}
 	
-	public int getScore() {
-		return score;
+	public int getScore(int plyFromRoot) {
+		return readjustMateScore(score, plyFromRoot);
 	}
 	
 	public int getAge() {
 		return age;
+	}
+	
+	private static int correctMateScore(int score, int plyFromRoot) {
+		if(AlphaBetaAI.isMateScore(score)) {
+			int sign = 0;
+			
+			if(score > 0) sign = 1;
+			else if(score < 0) sign = -1;
+			
+			return (score * sign + plyFromRoot) * sign;
+		}
+		
+		return score;
+	}
+	
+	private static int readjustMateScore(int score, int plyFromRoot) {
+		if(AlphaBetaAI.isMateScore(score)) {
+			int sign = 0;
+			
+			if(score > 0) sign = 1;
+			else if(score < 0) sign = -1;
+			
+			return (score * sign - plyFromRoot) * sign;
+		}
+		
+		return score;
 	}
 	
 }

@@ -6,11 +6,11 @@ public class TranspositionTable {
 	
 	private static final TranspositionEntry[] MAP = new TranspositionEntry[100000000];
 	
-	public static void putEntry(long key, int depth, Move m, int type, int score, int age) {
+	public static void putEntry(long key, int depth, int plyFromRoot, Move m, int type, int score, int age) {
 		int index = getMapIndex(key);
 		
 		TranspositionEntry old = MAP[index];
-		TranspositionEntry e = new TranspositionEntry(key, depth, m, type, score, age);
+		TranspositionEntry e = new TranspositionEntry(key, depth, plyFromRoot, m, type, score, age);
 		
 		if(old == null || shouldReplace(e, old)) MAP[index] = e;
 	}

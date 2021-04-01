@@ -10,6 +10,7 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 import de.chess.game.Move;
+import de.chess.game.MoveFlag;
 import de.chess.game.PieceCode;
 import de.chess.main.Main;
 
@@ -56,7 +57,7 @@ public class AudioUtil {
 	}
 	
 	public static void playMoveSound(Move m, int side) {
-		if(m.getCaptured() == 0) {
+		if(m.getCaptured() == 0 && m.getFlag() != MoveFlag.EN_PASSANT) {
 			
 			if(side == PieceCode.WHITE) play(WHITE_MOVE);
 			else play(BLACK_MOVE);

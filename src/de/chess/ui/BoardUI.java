@@ -29,11 +29,13 @@ public class BoardUI {
 	private static int humanSide = MathUtil.RANDOM.nextInt(2);
 	
 	private static Move lastMove;
+	
 	private static double lastMoveState;
 	
 	private static long lastHumanMove;
 	
 	private static int selected = -1;
+	
 	private static ArrayList<Move> selectedMoves;
 	
 	private static int selectedSquare;
