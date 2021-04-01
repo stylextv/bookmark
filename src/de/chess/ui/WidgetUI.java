@@ -218,13 +218,13 @@ public class WidgetUI {
 		int textX = x - (nameWidth + 7 + eloWidth) / 2;
 		int textY = y + ImageUtil.PROFILE_ICON.getHeight() + 35;
 		
-		graphics.setColor(Constants.COLOR_TEXT_WHITE_TRANSPARENT);
+		graphics.setColor(Constants.COLOR_TEXT_BLACK_TRANSPARENT);
 		
 		graphics.drawString(elo, textX + nameWidth + 7, textY);
 		
 		graphics.setFont(Constants.FONT_EXTRA_BOLD);
 		
-		graphics.setColor(Constants.COLOR_WHITE);
+		graphics.setColor(Constants.COLOR_HISTORY_BLACK);
 		
 		graphics.drawString(Constants.NAME, textX, textY);
 	}
@@ -263,7 +263,7 @@ public class WidgetUI {
 	}
 	
 	private static void drawEvaluationHistory(Graphics2D graphics, int x, int y, int width, int height) {
-		graphics.setColor(Constants.COLOR_BACKGROUND);
+		graphics.setColor(Constants.COLOR_HISTORY_BACKGROUND);
 		
 		graphics.fillRect(x, y, width, height);
 		
@@ -287,6 +287,17 @@ public class WidgetUI {
 			barX -= offsetX;
 		}
 		
+		if(evalHistoryPointer != 0) {
+			graphics.setColor(Constants.COLOR_HISTORY_HIGHLIGHT);
+			
+			int highlightX;
+			
+			if(overflow) highlightX = x + width - barWidth;
+			else highlightX = x + (evalHistoryPointer - 1) * barWidth;
+			
+			graphics.fillRect(highlightX, y, barWidth, height);
+		}
+		
 		for(int i = start; i < evalHistoryPointer; i++) {
 			int currentX = barX;
 			int currentWidth = barWidth;
@@ -302,11 +313,7 @@ public class WidgetUI {
 			barX += barWidth;
 		}
 		
-		graphics.setColor(Constants.COLOR_HISTORY_HIGHLIGHT);
-		
-		if(evalHistoryPointer != 0) {
-			graphics.fillRect(barX - barWidth, y, barWidth, height);
-		}
+		graphics.setColor(Constants.COLOR_HISTORY_MARKER);
 		
 		int step = 10;
 		
@@ -317,7 +324,7 @@ public class WidgetUI {
 		}
 		
 		for(int lineX = linesStartX; lineX < x + width; lineX += barWidth * step) {
-			if(lineX >= x && (lineX != x || overflow)) graphics.drawLine(lineX, y, lineX, y + height);
+			if(lineX >= x && (lineX != x || overflow)) graphics.drawLine(lineX, y, lineX, y + height - 1);
 		}
 		
 		graphics.drawLine(x, y + height / 2, x + width - 1, y + height / 2);

@@ -15,6 +15,7 @@ import de.chess.game.MoveGenerator;
 import de.chess.game.MoveList;
 import de.chess.game.PieceCode;
 import de.chess.game.Winner;
+import de.chess.io.Window;
 import de.chess.main.Constants;
 import de.chess.main.Main;
 import de.chess.util.ImageUtil;
@@ -37,11 +38,17 @@ public class BoardUI {
 	
 	private static int selectedSquare;
 	
+	private static boolean holdingPiece;
+	
+	private static boolean initialHold;
+	
 	private static Move[] pawnPromotions; 
 	
 	private static int winner = Winner.NONE;
 	
 	private static Point mouseClick;
+	
+	private static int clickType;
 	
 	public static void update(Board board) {
 		if(lastMove != null) {
@@ -69,24 +76,26 @@ public class BoardUI {
 		if(mouseClick != null) {
 			
 			if(pawnPromotions != null) {
-				int i = PromotionUI.isHoveringBox(mouseClick.x, mouseClick.y, UIManager.getWidth(), UIManager.getHeight());
-				
-				if(i != -1) {
-					clearLastMove();
+				if(clickType == Window.MOUSE_PRESSED) {
+					int i = PromotionUI.isHoveringBox(mouseClick.x, mouseClick.y, UIManager.getWidth(), UIManager.getHeight());
 					
-					board.makeMove(pawnPromotions[i]);
+					if(i != -1) {
+						clearLastMove();
+						
+						board.makeMove(pawnPromotions[i]);
+						
+						lastMove = pawnPromotions[i];
+						lastMoveState = 0;
+						
+						checkForWinner(board);
+						
+						AudioUtil.playMoveSound(lastMove, board.getSide());
+						
+						lastHumanMove = System.currentTimeMillis();
+					}
 					
-					lastMove = pawnPromotions[i];
-					lastMoveState = 0;
-					
-					checkForWinner(board);
-					
-					AudioUtil.playMoveSound(lastMove, board.getSide());
-					
-					lastHumanMove = System.currentTimeMillis();
+					pawnPromotions = null;
 				}
-				
-				pawnPromotions = null;
 				
 				mouseClick = null;
 				
@@ -114,59 +123,88 @@ public class BoardUI {
 						index = 63 - index;
 					}
 					
-					if(selected == -1) {
-						selectPiece(board, index, boardX, boardY);
-					} else {
-						Move[] moves = new Move[4];
-						int l = 0;
-						
-						for(Move check : selectedMoves) {
-							if(index == check.getTo()) {
-								moves[l] = check;
-								
-								l++;
-							}
-						}
-						
-						clearSelectedPiece();
-						
-						if(l != 0) {
-							if(l == 1) {
-								clearLastMove();
-								
-								int side = board.getSide();
-								
-								board.makeMove(moves[0]);
-								
-								lastMove = moves[0];
-								lastMoveState = 0;
-								
-								AudioUtil.playMoveSound(moves[0], side);
-								
-								checkForWinner(board);
-								
-								lastHumanMove = System.currentTimeMillis();
-							} else {
-								PromotionUI.setSide(board.getSide());
-								
-								int x = moves[0].getTo() % 8;
-								
-								if(humanSide == PieceCode.BLACK) {
-									x = 7 - x;
-								}
-								
-								PromotionUI.setOffset(x);
-								
-								pawnPromotions = moves;
-							}
-						} else if(index != selectedSquare) {
+					if(clickType == Window.MOUSE_PRESSED) {
+						if(selected == -1) {
 							selectPiece(board, index, boardX, boardY);
+						} else {
+							if(index == selectedSquare) {
+								holdingPiece = true;
+								initialHold = false;
+							}
+							
+							performMove(board, index, boardX, boardY, true, true);
 						}
+					} else if(selected != -1) {
+						
+						holdingPiece = false;
+						
+						performMove(board, index, boardX, boardY, false, false);
 					}
 					
-				} else clearSelectedPiece();
-			} else clearSelectedPiece();
+				} else {
+					if(clickType == Window.MOUSE_PRESSED) unselecPiece();
+					else holdingPiece = false;
+				}
+			} else {
+				if(clickType == Window.MOUSE_PRESSED) unselecPiece();
+				else holdingPiece = false;
+			}
 		}
+	}
+	
+	private static void performMove(Board b, int index, int boardX, int boardY, boolean withAnimation, boolean unselect) {
+		Move[] moves = new Move[4];
+		int l = 0;
+		
+		for(Move check : selectedMoves) {
+			if(index == check.getTo()) {
+				moves[l] = check;
+				
+				l++;
+			}
+		}
+		
+		if(l != 0) {
+			unselecPiece();
+			
+			if(l == 1) {
+				clearLastMove();
+				
+				int side = b.getSide();
+				
+				b.makeMove(moves[0]);
+				
+				if(withAnimation) {
+					lastMove = moves[0];
+					lastMoveState = 0;
+				}
+				
+				AudioUtil.playMoveSound(moves[0], side);
+				
+				checkForWinner(b);
+				
+				lastHumanMove = System.currentTimeMillis();
+			} else {
+				PromotionUI.setSide(b.getSide());
+				
+				int x = moves[0].getTo() % 8;
+				
+				if(humanSide == PieceCode.BLACK) {
+					x = 7 - x;
+				}
+				
+				PromotionUI.setOffset(x);
+				
+				pawnPromotions = moves;
+			}
+		} else if(index != selectedSquare) {
+			if(unselect) {
+				unselecPiece();
+				
+				selectPiece(b, index, boardX, boardY);
+			}
+			
+		} else if(!unselect && !initialHold) unselecPiece();
 	}
 	
 	private static void selectPiece(Board board, int index, int boardX, int boardY) {
@@ -188,9 +226,12 @@ public class BoardUI {
 		selectedMoves = moves;
 		
 		selectedSquare = index;
+		
+		holdingPiece = true;
+		initialHold = true;
 	}
 	
-	private static void clearSelectedPiece() {
+	private static void unselecPiece() {
 		selected = -1;
 	}
 	
@@ -272,6 +313,13 @@ public class BoardUI {
 		}
 	}
 	
+	public static void drawHeldPiece(Graphics2D graphics) {
+		if(selected != -1 && holdingPiece) {
+			
+			drawFloatingPiece(graphics, selected, UIManager.getMouseX() - Constants.TILE_SIZE / 2, UIManager.getMouseY() - Constants.TILE_SIZE / 2);
+		}
+	}
+	
 	public static void drawBoardCorners(Graphics2D graphics, int x, int y) {
 		graphics.drawImage(ImageUtil.BOARD_CORNERS, x, y, null);
 	}
@@ -283,7 +331,9 @@ public class BoardUI {
 		int pos2X = -1;
 		int pos2Y = -1;
 		
-		int index = y*8 + x;
+		int index = y * 8 + x;
+		
+		if(selected != -1 && holdingPiece && selectedSquare == index) return;
 		
 		if(pawnPromotions != null) {
 			Move m = pawnPromotions[0];
@@ -380,9 +430,25 @@ public class BoardUI {
 		graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 	}
 	
-	public static void onMouseClick(Point p) {
+	private static void drawFloatingPiece(Graphics2D graphics, int p, int x, int y) {
+		int off = 66 - Constants.TILE_SIZE / 2;
+		
+		if(x < off) x = off;
+		else if(x > off + Constants.BOARD_SIZE) x = off + Constants.BOARD_SIZE;
+		
+		if(y < off) y = off;
+		else if(y > off + Constants.BOARD_SIZE) y = off + Constants.BOARD_SIZE;
+		
+		BufferedImage sprite = PieceCode.getSprite(p);
+		
+		graphics.drawImage(sprite, x, y, null);
+	}
+	
+	public static void onMouseClick(Point p, int type) {
 		if(Main.getBoard().getSide() == humanSide) {
 			mouseClick = p;
+			
+			clickType = type;
 		}
 	}
 	

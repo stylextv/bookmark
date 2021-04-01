@@ -4,7 +4,7 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
 
-import com.github.weisj.darklaf.theme.DarculaTheme;
+import com.github.weisj.darklaf.theme.IntelliJTheme;
 
 import de.chess.game.PieceCode;
 import de.chess.game.Winner;
@@ -28,7 +28,7 @@ public class UIManager {
 	public static void createWindow() {
 		window = new Window(Constants.WINDOW_DEFAULT_WIDTH + 16, Constants.WINDOW_DEFAULT_HEIGHT + 39);
 		
-		Window.installTheme(new DarculaTheme());
+		Window.installTheme(new IntelliJTheme());
 		
 		window.create();
 	}
@@ -60,6 +60,8 @@ public class UIManager {
 		
 		MoveIndicatorUI.drawMoves(graphics, Main.getBoard());
 		
+		BoardUI.drawHeldPiece(graphics);
+		
 		BoardUI.drawBoardCorners(graphics, 66, 66);
 		
 		PromotionUI.updateDropDown(graphics);
@@ -68,7 +70,7 @@ public class UIManager {
 	}
 	
 	public static void onMouseClick(Point p, int type) {
-		if(type == Window.MOUSE_PRESSED) BoardUI.onMouseClick(p);
+		BoardUI.onMouseClick(p, type);
 		
 		if(type == Window.MOUSE_RELEASED) {
 			if(PopupUI.isActive()) {
