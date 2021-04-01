@@ -6,7 +6,7 @@ import java.awt.Font;
 public class Constants {
 	
 	public static final String NAME = "Bookmark";
-	public static final int ELO = 2600;
+	public static final int ELO = 2550;
 	
 	public static final int WINDOW_DEFAULT_WIDTH = 1050;
 	public static final int WINDOW_DEFAULT_HEIGHT = 772;
@@ -32,6 +32,10 @@ public class Constants {
 	
 	public static final Color COLOR_PLAYER_WHITE = COLOR_WHITE;
 	public static final Color COLOR_PLAYER_BLACK = COLOR_MENU_BACKGROUND;
+	
+	public static final Color COLOR_HISTORY_WHITE = new Color(255, 255, 255, 128);
+	public static final Color COLOR_HISTORY_BLACK = new Color(255, 255, 255, 51);
+	public static final Color COLOR_HISTORY_HIGHLIGHT = new Color(255, 255, 255, 26);
 	
 	public static final Font FONT_LIGHT = new Font("Segoe UI Light", 0, 18);
 	public static final Font FONT_BOLD = new Font("Segoe UI Bold", 0, 12);

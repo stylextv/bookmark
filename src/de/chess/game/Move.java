@@ -70,7 +70,7 @@ public class Move {
 	
 	@Override
 	public String toString() {
-		return "Move[to = "+to+", from = "+from+", captured = "+captured+", promoted = "+promoted+", flag = "+flag+"]";
+		return "Move[to = "+to+", from = "+from+", captured = "+captured+", promoted = "+promoted+", flag = "+flag+", hash = "+hash+", score = "+score+"]";
 	}
 	
 }

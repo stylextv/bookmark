@@ -3,6 +3,7 @@ package de.chess.game;
 import de.chess.ai.AlphaBetaAI;
 import de.chess.ai.OpeningBook;
 import de.chess.ai.OpeningPosition;
+import de.chess.ui.WidgetUI;
 
 public class Board {
 	
@@ -392,6 +393,9 @@ public class Board {
 			
 			System.out.println("------");
 			System.out.println("played move from book: "+m);
+			
+			WidgetUI.setPrediction(0);
+			WidgetUI.addToEvalHistory(0);
 			
 			makeMove(m);
 			

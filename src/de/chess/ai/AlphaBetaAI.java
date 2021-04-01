@@ -14,16 +14,14 @@ public class AlphaBetaAI {
 	
 	private static final int MATE_SCORE = 100000;
 	
-	private static final int MAX_ITERATIVE_DEPTH = 6;
+	private static final int ALLOCATED_TIME = 3000;
 	
-	private static final int MAX_QUIESCE_DEPTH = -21;
 	private static final int MAX_CHECKING_MOVES_DEPTH = -11;
 	
 	private static Move responseMove;
 	
 	private static long visitedNormalNodes;
 	private static long visitedQuiesceNodes;
-	private static int exploredDepth;
 	private static int transpositionUses;
 	
 	public static Move findNextMove(Board b) {
@@ -33,17 +31,18 @@ public class AlphaBetaAI {
 		
 		visitedNormalNodes = 0;
 		visitedQuiesceNodes = 0;
-		exploredDepth = 0;
 		transpositionUses = 0;
 		
 		int score = 0;
 		
-		for(int i=0; i<MAX_ITERATIVE_DEPTH; i++) {
-			int depth = i + 1;
-			
+		int depth = 1;
+		
+		while(System.currentTimeMillis() - before < ALLOCATED_TIME) {
 			score = startSearch(b, depth);
 			
 			System.out.println("depth "+depth+" search complete");
+			
+			depth++;
 		}
 		
 		float time = (System.currentTimeMillis() - before) / 1000f;
@@ -52,7 +51,6 @@ public class AlphaBetaAI {
 		
 		System.out.println("---");
 		System.out.println("time: "+MathUtil.DECIMAL_FORMAT.format(time)+"s");
-		System.out.println("max_explored_depth: "+MathUtil.DECIMAL_FORMAT.format(exploredDepth));
 		System.out.println("prediction: "+MathUtil.DECIMAL_FORMAT.format(score));
 		System.out.println("visited_nodes: "+MathUtil.DECIMAL_FORMAT.format(visitedNodes));
 		System.out.println("nodes_per_second: "+MathUtil.DECIMAL_FORMAT.format(visitedNodes / time));
@@ -61,6 +59,7 @@ public class AlphaBetaAI {
 		System.out.println("transposition_uses: "+MathUtil.DECIMAL_FORMAT.format(transpositionUses));
 		
 		WidgetUI.setPrediction(score);
+		WidgetUI.addToEvalHistory(score);
 		
 		return responseMove;
 	}
@@ -115,8 +114,6 @@ public class AlphaBetaAI {
 	}
 	
 	private static int alphaBeta(Board b, int plyFromRoot, int alpha, int beta, int depth) {
-		if(depth < exploredDepth) exploredDepth = depth;
-		
 		if(depth == 0) {
 			return quiesce(b, plyFromRoot, alpha, beta, depth);
 		}
@@ -214,7 +211,6 @@ public class AlphaBetaAI {
 	
 	private static int quiesce(Board b, int plyFromRoot, int alpha, int beta, int depth) {
 		visitedQuiesceNodes++;
-		if(depth < exploredDepth) exploredDepth = depth;
 		
 		if(b.getFiftyMoveCounter() == 100 || b.hasThreefoldRepetition()) return 0;
 		
@@ -236,10 +232,6 @@ public class AlphaBetaAI {
 			int evalScore = Evaluator.eval(b);
 			
 			if(evalScore >= beta) return beta;
-			
-			if(depth <= MAX_QUIESCE_DEPTH) {
-				return evalScore;
-			}
 			
 			if(evalScore > alpha) alpha = evalScore;
 		}

@@ -54,7 +54,7 @@ public class UIManager {
 		graphics.setColor(Constants.COLOR_BACKGROUND);
 		graphics.fillRect(0, 0, width, height);
 		
-		WidgetUI.drawWidgets(graphics);
+		WidgetUI.drawWidgets(graphics, Main.getBoard());
 		
 		BoardUI.drawBoard(graphics, Main.getBoard(), 66, 66);
 		
@@ -101,6 +101,8 @@ public class UIManager {
 					Main.getBoard().reset();
 					
 					WidgetUI.setPrediction(0);
+					
+					WidgetUI.clearEvalHistory();
 					
 					BoardUI.setWinner(Winner.NONE);
 				}

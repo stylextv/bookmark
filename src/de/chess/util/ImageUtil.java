@@ -18,6 +18,7 @@ public class ImageUtil {
 	
 	public static BufferedImage PREDICTION_BAR_CORNERS;
 	public static BufferedImage BOARD_CORNERS;
+	public static BufferedImage EVAL_HISTORY_CORNERS;
 	
 	public static BufferedImage BLACK_BISHOP;
 	public static BufferedImage BLACK_KING;
@@ -32,6 +33,8 @@ public class ImageUtil {
 	public static BufferedImage WHITE_PAWN;
 	public static BufferedImage WHITE_QUEEN;
 	public static BufferedImage WHITE_ROOK;
+	
+	public static BufferedImage[] PIECE_ICONS = new BufferedImage[15];
 	
 	public static BufferedImage ATTACK_INDICATOR;
 	
@@ -60,6 +63,7 @@ public class ImageUtil {
 
 			BOARD_CORNERS = loadImage("corners_board.png");
 			PREDICTION_BAR_CORNERS = loadImage("corners_prediction_bar.png");
+			EVAL_HISTORY_CORNERS = loadImage("corners_eval_history.png");
 			
 			BLACK_BISHOP = loadImage("pieces/black_bishop.png");
 			BLACK_KING = loadImage("pieces/black_king.png");
@@ -74,6 +78,22 @@ public class ImageUtil {
 			WHITE_PAWN = loadImage("pieces/white_pawn.png");
 			WHITE_QUEEN = loadImage("pieces/white_queen.png");
 			WHITE_ROOK = loadImage("pieces/white_rook.png");
+			
+			PIECE_ICONS[0] = loadImage("pieces/icons/pawn.png");
+			PIECE_ICONS[1] = loadImage("pieces/icons/pawns_2.png");
+			PIECE_ICONS[2] = loadImage("pieces/icons/pawns_3.png");
+			PIECE_ICONS[3] = loadImage("pieces/icons/pawns_4.png");
+			PIECE_ICONS[4] = loadImage("pieces/icons/pawns_5.png");
+			PIECE_ICONS[5] = loadImage("pieces/icons/pawns_6.png");
+			PIECE_ICONS[6] = loadImage("pieces/icons/pawns_7.png");
+			PIECE_ICONS[7] = loadImage("pieces/icons/pawns_8.png");
+			PIECE_ICONS[8] = loadImage("pieces/icons/bishop.png");
+			PIECE_ICONS[9] = loadImage("pieces/icons/bishops.png");
+			PIECE_ICONS[10] = loadImage("pieces/icons/knight.png");
+			PIECE_ICONS[11] = loadImage("pieces/icons/knights.png");
+			PIECE_ICONS[12] = loadImage("pieces/icons/rook.png");
+			PIECE_ICONS[13] = loadImage("pieces/icons/rooks.png");
+			PIECE_ICONS[14] = loadImage("pieces/icons/queen.png");
 			
 			ATTACK_INDICATOR = loadImage("attack_indicator.png");
 			
