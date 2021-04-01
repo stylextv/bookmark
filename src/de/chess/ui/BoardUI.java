@@ -174,10 +174,8 @@ public class BoardUI {
 				
 				b.makeMove(moves[0]);
 				
-				if(withAnimation) {
-					lastMove = moves[0];
-					lastMoveState = 0;
-				}
+				lastMove = moves[0];
+				lastMoveState = withAnimation ? 0 : 1;
 				
 				AudioUtil.playMoveSound(moves[0], side);
 				

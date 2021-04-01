@@ -56,8 +56,7 @@ public class Board {
 //		
 ////		long occupiedSquares = getBitBoard(PieceCode.WHITE).orReturn(getBitBoard(PieceCode.BLACK));
 //		
-//		System.out.println(Evaluator.evalPassingPawns(this, PieceCode.WHITE));
-//		System.out.println(Evaluator.evalPassingPawns(this, PieceCode.BLACK));
+//		System.out.println(Evaluator.evalCenterPawns(this, 256));
 	}
 	
 	public void parseFen(String fen) {

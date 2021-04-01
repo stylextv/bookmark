@@ -513,10 +513,10 @@ public class Evaluator {
 		return score;
 	}
 	
-	private static int evalCenterPawns(Board b, int normalWeight) {
+	public static int evalCenterPawns(Board b, int normalWeight) {
 		int score = 0;
 		
-		int bonus = 3 * normalWeight / 256;
+		int bonus = 4 * normalWeight / 256;
 		
 		for(int x=3; x<5; x++) {
 			for(int y=3; y<5; y++) {

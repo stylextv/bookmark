@@ -44,7 +44,7 @@ public class PopupUI {
 		BUFFER_GRAPHICS.setColor(Constants.COLOR_MENU_BACKGROUND);
 		BUFFER_GRAPHICS.fillRoundRect(off, off, width, height, 4, 4);
 		
-		BUFFER_GRAPHICS.setColor(Constants.COLOR_WHITE);
+		BUFFER_GRAPHICS.setColor(Constants.COLOR_HISTORY_BLACK);
 		BUFFER_GRAPHICS.setFont(Constants.FONT_EXTRA_BOLD_LARGE);
 		
 		BUFFER_GRAPHICS.drawString(title, off + width/2 - BUFFER_GRAPHICS.getFontMetrics().stringWidth(title)/2, off + height/2 + 9);
@@ -78,8 +78,8 @@ public class PopupUI {
 		if(state > 0.005f) {
 			String s;
 			
-			if(displayWinner == Winner.DRAW) s = "Unentschieden";
-			else s = displayWinner == BoardUI.getHumanSide() ? "Sieg" : "Niederlage";
+			if(displayWinner == Winner.DRAW) s = "Draw";
+			else s = displayWinner == BoardUI.getHumanSide() ? "Victory" : "Defeat";
 			
 			drawPopup(graphics, s);
 		} else {
