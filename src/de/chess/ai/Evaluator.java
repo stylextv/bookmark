@@ -9,12 +9,12 @@ import de.chess.game.PieceCode;
 
 public class Evaluator {
 	
-	private static final int PAWN_VALUE = 30;
-	private static final int KNIGHT_VALUE = 96;
-	private static final int BISHOP_VALUE = 99;
-	private static final int ROOK_VALUE = 153;
-	private static final int QUEEN_VALUE = 264;
-	private static final int KING_VALUE = 120;
+	public static final int PAWN_VALUE = 126;
+	public static final int KNIGHT_VALUE = 781;
+	public static final int BISHOP_VALUE = 825;
+	public static final int ROOK_VALUE = 1276;
+	public static final int QUEEN_VALUE = 2538;
+	public static final int KING_VALUE = 1154;
 	
 	private static final int[] PAWN_TABLE = new int[] {
 			 0,   0,   0,   0,   0,   0,   0,   0, 
@@ -155,9 +155,7 @@ public class Evaluator {
 		}
 	}
 	
-	public static int eval(Board b) {
-		b.countPieces();
-		
+	public static int eval(Board b, int beta) {
 		int endgameWeight = b.getEndgameWeight();
 		int normalWeight = 256 - endgameWeight;
 		
@@ -194,6 +192,14 @@ public class Evaluator {
 				}
 			}
 		}
+		
+		int materialScore = score;
+		
+		if(b.getSide() == PieceCode.BLACK) materialScore = -materialScore;
+		
+		int margin = 1716;
+		
+		if(materialScore >= beta + margin) return materialScore;
 		
 		long occupiedSquares = b.getBitBoard(PieceCode.WHITE).orReturn(b.getBitBoard(PieceCode.BLACK));
 		
@@ -263,12 +269,12 @@ public class Evaluator {
 						boolean closed = checkFriendlyPawn(b, square, side) || checkFriendlyPawn(b, square + dir, side);
 						
 						if(!closed) {
-							int penalty = 20;
+							int penalty = 156;
 							
 							int disToKing = x - squareX;
 							if(disToKing < 0) disToKing = -disToKing;
 							
-							if(disToKing < 2) penalty = 25;
+							if(disToKing < 2) penalty = 195;
 							
 							safety -= (penalty * normalWeight) / 256;
 						}
@@ -283,7 +289,7 @@ public class Evaluator {
 			
 			int sliderAttackSquareAmount = BitOperations.countBits(queenMoves);
 			
-			safety -= (sliderAttackSquareAmount / 4 * normalWeight) / 256;
+			safety -= (sliderAttackSquareAmount * 2 * normalWeight) / 256;
 		}
 		
 		int opponentSide = (side + 1) % 2;
@@ -303,7 +309,7 @@ public class Evaluator {
 			int dis = disX + disY;
 			
 			if(dis < 4) {
-				safety -= (4 - dis) * 10;
+				safety -= (4 - dis) * 78;
 			}
 		}
 		
@@ -330,7 +336,7 @@ public class Evaluator {
 			
 			if(l != 0) {
 				attackingPiecesAmount++;
-				valueOfAttacks += l * 4;
+				valueOfAttacks += l * 32;
 			}
 		}
 		
@@ -343,7 +349,7 @@ public class Evaluator {
 			
 			if(l != 0) {
 				attackingPiecesAmount++;
-				valueOfAttacks += l * 4;
+				valueOfAttacks += l * 32;
 			}
 		}
 		
@@ -356,7 +362,7 @@ public class Evaluator {
 			
 			if(l != 0) {
 				attackingPiecesAmount++;
-				valueOfAttacks += l * 8;
+				valueOfAttacks += l * 64;
 			}
 		}
 		
@@ -373,7 +379,7 @@ public class Evaluator {
 			
 			if(l != 0) {
 				attackingPiecesAmount++;
-				valueOfAttacks += l * 16;
+				valueOfAttacks += l * 128;
 			}
 		}
 		
@@ -433,7 +439,7 @@ public class Evaluator {
 				
 				if(dis > 4) dis = 4;
 				
-				return -(count * 5 * dis / 4 * weight) / 256;
+				return -(count * 39 * dis / 4 * weight) / 256;
 			}
 		}
 		return 0;
@@ -507,16 +513,16 @@ public class Evaluator {
 			if(passing) {
 				int m = 7 - disToTarget;
 				
-				score += 8 + 2 * m;
+				score += 62 + 16 * m;
 			}
 		}
 		return score;
 	}
 	
-	public static int evalCenterPawns(Board b, int normalWeight) {
+	private static int evalCenterPawns(Board b, int normalWeight) {
 		int score = 0;
 		
-		int bonus = 4 * normalWeight / 256;
+		int bonus = 31 * normalWeight / 256;
 		
 		for(int x=3; x<5; x++) {
 			for(int y=3; y<5; y++) {

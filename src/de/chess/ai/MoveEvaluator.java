@@ -7,7 +7,7 @@ import de.chess.game.MoveList;
 public class MoveEvaluator {
 	
 	public static final int HASH_MOVE_SCORE = 200000;
-	public static final int KILLER_MOVE_SCORE = 600;
+	public static final int KILLER_MOVE_SCORE = 7000;
 	
 	private static final int CAPTURED_PIECE_MULTIPLIER = 10;
 	

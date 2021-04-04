@@ -7,6 +7,7 @@ public class BitBoard {
 	public BitBoard() {
 		this(0);
 	}
+	
 	public BitBoard(long value) {
 		this.value = value;
 	}
@@ -30,6 +31,7 @@ public class BitBoard {
 	public long andReturn(long l) {
 		return value & l;
 	}
+	
 	public long andReturn(BitBoard b) {
 		return value & b.getValue();
 	}

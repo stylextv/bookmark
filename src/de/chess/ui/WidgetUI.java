@@ -15,7 +15,7 @@ import de.chess.util.MathUtil;
 
 public class WidgetUI {
 	
-	private static final int RANGE = 350;
+	private static final int EVAL_RANGE = 2730;
 	
 	private static final int[] DEFAULT_PIECE_AMOUNT = new int[] {
 			0,
@@ -67,8 +67,6 @@ public class WidgetUI {
 	}
 	
 	private static void drawCapturedPieces(Graphics2D graphics, Board b, int side, int x, int y) {
-		b.countPieces();
-		
 		x = drawCapturedPieces(graphics, b, side, PieceCode.PAWN, x, y);
 		x = drawCapturedPieces(graphics, b, side, PieceCode.BISHOP, x, y);
 		x = drawCapturedPieces(graphics, b, side, PieceCode.KNIGHT, x, y);
@@ -97,8 +95,8 @@ public class WidgetUI {
 	private static void drawPredictionBar(Graphics2D graphics, int x, int y) {
 		int target = prediction;
 		
-		if(target > RANGE) target = RANGE;
-		else if(target < -RANGE) target = -RANGE;
+		if(target > EVAL_RANGE) target = EVAL_RANGE;
+		else if(target < -EVAL_RANGE) target = -EVAL_RANGE;
 		
 		lerpedPrediction = MathUtil.lerp(lerpedPrediction, target, 0.05f);
 		
@@ -116,7 +114,7 @@ public class WidgetUI {
 		
 		graphics.fillRect(x, y, w, Constants.BOARD_SIZE);
 		
-		float h = (lerpedPrediction + RANGE) / RANGE / 2 * Constants.BOARD_SIZE;
+		float h = (lerpedPrediction + EVAL_RANGE) / EVAL_RANGE / 2 * Constants.BOARD_SIZE;
 		
 		float f = 0.05f;
 		
@@ -171,7 +169,7 @@ public class WidgetUI {
 			s = "M" + moves;
 			
 		} else {
-			float pawns = (float) a / Evaluator.getPieceValue(PieceCode.PAWN);
+			float pawns = (float) a / Evaluator.PAWN_VALUE;
 			
 			s = MathUtil.DISPLAY_DECIMAL_FORMAT.format(pawns);
 		}
@@ -344,7 +342,7 @@ public class WidgetUI {
 		if(prediction > 0) {
 			graphics.setColor(Constants.COLOR_HISTORY_WHITE);
 			
-			int h = (int) ((float) prediction / RANGE * maxHeight);
+			int h = (int) ((float) prediction / EVAL_RANGE * maxHeight);
 			
 			if(h > maxHeight) h = maxHeight;
 			
@@ -352,7 +350,7 @@ public class WidgetUI {
 		} else {
 			graphics.setColor(Constants.COLOR_HISTORY_BLACK);
 			
-			int h = (int) ((float) (-prediction) / RANGE * maxHeight);
+			int h = (int) ((float) (-prediction) / EVAL_RANGE * maxHeight);
 			
 			if(h > maxHeight) h = maxHeight;
 			

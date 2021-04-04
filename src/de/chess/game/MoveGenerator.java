@@ -14,6 +14,7 @@ public class MoveGenerator {
 	public static final int[] ROOK1_START_POSITION = new int[] {
 			56, 0
 	};
+	
 	public static final int[] ROOK2_START_POSITION = new int[] {
 			63, 7
 	};
@@ -120,12 +121,9 @@ public class MoveGenerator {
 	}
 	
 	private static void addPawnMove(MoveList list, int side, int from, int to, int captured, int flag) {
-		boolean promoted = false;
 		int toY = to / 8;
 		
-		if((side == PieceCode.WHITE && toY == 0) || (side == PieceCode.BLACK && toY == 7)) {
-			promoted = true;
-		}
+		boolean promoted = toY % 7 == 0;
 		
 		if(promoted) {
 			
@@ -178,34 +176,24 @@ public class MoveGenerator {
 		if(side == PieceCode.WHITE) {
 			
 			if((b.getCastlePerms() & Castling.WHITE_QUEEN_SIDE) == 0) {
-				addCastlingMove(b, list, side, index, Castling.WHITE_QUEEN_SIDE, emptySquares);
+				addCastlingMove(b, list, side, index, Castling.WHITE_QUEEN_SIDE, emptySquares, -1, MoveFlag.CASTLING_QUEEN_SIDE);
 			}
 			if((b.getCastlePerms() & Castling.WHITE_KING_SIDE) == 0) {
-				addCastlingMove(b, list, side, index, Castling.WHITE_KING_SIDE, emptySquares);
+				addCastlingMove(b, list, side, index, Castling.WHITE_KING_SIDE, emptySquares, 1, MoveFlag.CASTLING_KING_SIDE);
 			}
 			
 		} else {
 			
 			if((b.getCastlePerms() & Castling.BLACK_QUEEN_SIDE) == 0) {
-				addCastlingMove(b, list, side, index, Castling.BLACK_QUEEN_SIDE, emptySquares);
+				addCastlingMove(b, list, side, index, Castling.BLACK_QUEEN_SIDE, emptySquares, -1, MoveFlag.CASTLING_QUEEN_SIDE);
 			}
 			if((b.getCastlePerms() & Castling.BLACK_KING_SIDE) == 0) {
-				addCastlingMove(b, list, side, index, Castling.BLACK_KING_SIDE, emptySquares);
+				addCastlingMove(b, list, side, index, Castling.BLACK_KING_SIDE, emptySquares, 1, MoveFlag.CASTLING_KING_SIDE);
 			}
 		}
 	}
 	
-	private static void addCastlingMove(Board b, MoveList list, int side, int from, int castlingSide, long emptySquares) {
-		int dir = -1;
-		
-		int flag = MoveFlag.CASTLING_QUEEN_SIDE;
-		
-		if(castlingSide == Castling.WHITE_KING_SIDE || castlingSide == Castling.BLACK_KING_SIDE) {
-			dir = 1;
-			
-			flag = MoveFlag.CASTLING_KING_SIDE;
-		}
-		
+	private static void addCastlingMove(Board b, MoveList list, int side, int from, int castlingSide, long emptySquares, int dir, int flag) {
 		int to = from + dir * 2;
 		
 		int square = from;

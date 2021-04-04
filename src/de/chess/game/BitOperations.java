@@ -3,6 +3,7 @@ package de.chess.game;
 public class BitOperations {
 	
 	private static final long DE_BRUIJN_CONSTANT = 0x03f79d71b4cb0a89L;
+	
 	private static final int[] MAGIC_TABLE = {
 			0,  1,  48,  2, 57, 49, 28,  3,
 			61, 58, 50, 42, 38, 29, 17,  4,
@@ -20,6 +21,7 @@ public class BitOperations {
 	
 	public static int bitScanForward(long l) {
 		int i = (int)(((l & -l) * DE_BRUIJN_CONSTANT) >>> 58);
+		
 		return MAGIC_TABLE[i];
 	}
 	

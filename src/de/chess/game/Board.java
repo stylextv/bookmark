@@ -8,7 +8,9 @@ import de.chess.ui.WidgetUI;
 public class Board {
 	
 	// sebastian pawn endgame: 8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1
-	private static final String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+	// crazy karpov move: r1bqk2r/pp3pp1/2pbpn1p/8/3P3Q/3B1N2/PPP2PPP/R1B1K2R b KQkq - 0 1
+	
+	private static final String STARTING_POSITION = "r1bqk2r/pp3pp1/2pbpn1p/8/3P3Q/3B1N2/PPP2PPP/R1B1K2R b KQkq - 0 1"; // "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 	
 	private BitBoard[] bitBoards = new BitBoard[PieceCode.LAST + 1];
 	
@@ -17,6 +19,8 @@ public class Board {
 	private int[][] pieceIndices = new int[12][11];
 	
 	private int[] pieceCounters = new int[12];
+	
+	private boolean countedPieces;
 	
 	private int side;
 	
@@ -47,16 +51,14 @@ public class Board {
 	public void reset() {
 		parseFen(STARTING_POSITION);
 		
-//		LookupTable.initTables();
-//		
-//		countPieces();
-//		
-////		int endgameWeight = getEndgameWeight();
-////		int normalWeight = 256 - endgameWeight;
-//		
-////		long occupiedSquares = getBitBoard(PieceCode.WHITE).orReturn(getBitBoard(PieceCode.BLACK));
-//		
-//		System.out.println(Evaluator.evalCenterPawns(this, 256));
+		LookupTable.initTables();
+		
+//		int endgameWeight = getEndgameWeight();
+//		int normalWeight = 256 - endgameWeight;
+		
+//		long occupiedSquares = getBitBoard(PieceCode.WHITE).orReturn(getBitBoard(PieceCode.BLACK));
+		
+//		System.out.println(Evaluator.eval(this, 1000000));
 	}
 	
 	public void parseFen(String fen) {
@@ -95,6 +97,8 @@ public class Board {
 				square++;
 			}
 		}
+		
+		countedPieces = false;
 		
 		if(split[1].equals("w")) side = PieceCode.WHITE;
 		else side = PieceCode.BLACK;
@@ -205,7 +209,7 @@ public class Board {
 		return PieceCode.getTypeFromSpriteCode(i);
 	}
 	
-	public void clearSquare(int index, int side, int type) {
+	private void clearSquare(int index, int side, int type) {
 		long key = BoardConstants.BIT_SET[index];
 		
 		bitBoards[side].xor(key);
@@ -217,7 +221,7 @@ public class Board {
 		pieces[index] = -1;
 	}
 	
-	public void setPiece(int index, int side, int type) {
+	private void setPiece(int index, int side, int type) {
 		long key = BoardConstants.BIT_SET[index];
 		
 		bitBoards[side].xor(key);
@@ -307,6 +311,8 @@ public class Board {
 			updateCastlePerms(PieceCode.BLACK, m.getFrom(), m.getTo());
 		}
 		
+		countedPieces = false;
+		
 		side = opponentSide;
 		positionKey ^= PositionKey.getRandomNumber(PositionKey.SIDE_OFFSET);
 	}
@@ -364,6 +370,47 @@ public class Board {
 			setPiece(rookFrom, side, PieceCode.ROOK);
 			clearSquare(rookTo, side, PieceCode.ROOK);
 		}
+		
+		countedPieces = false;
+		
+		positionKey = u.getPositionKey();
+	}
+	
+	public void makeNullMove() {
+		UndoStructure u = history[historyPly];
+		
+		u.setPositionKey(positionKey);
+		
+		int opponentSide = (side + 1) % 2;
+		
+		u.setFiftyMoveCounter(fiftyMoveCounter);
+		u.setCastlePerms(castlePerms);
+		u.setEnPassant(enPassant);
+		
+		historyPly++;
+		
+		if(enPassant != BoardSquare.NONE) {
+			positionKey ^= PositionKey.getRandomNumber(PositionKey.EN_PASSANT_OFFSET + enPassant % 8);
+		}
+		
+		enPassant = BoardSquare.NONE;
+		
+		side = opponentSide;
+		positionKey ^= PositionKey.getRandomNumber(PositionKey.SIDE_OFFSET);
+	}
+	
+	public void undoNullMove() {
+		side = (side + 1) % 2;
+		
+		historyPly--;
+		
+		UndoStructure u = history[historyPly];
+		
+		fiftyMoveCounter = u.getFiftyMoveCounter();
+		
+		castlePerms = u.getCastlePerms();
+		
+		enPassant = u.getEnPassant();
 		
 		positionKey = u.getPositionKey();
 	}
@@ -496,6 +543,7 @@ public class Board {
 		updateCastlePerms(side, from, to, 0);
 		updateCastlePerms(side, from, to, 1);
 	}
+	
 	private void updateCastlePerms(int side, int from, int to, int rookIndex) {
 		int square;
 		
@@ -564,7 +612,7 @@ public class Board {
 		return false;
 	}
 	
-	public void countPieces() {
+	private void countPieces() {
 		for(int i=0; i<pieceCounters.length; i++) {
 			pieceCounters[i] = 0;
 		}
@@ -580,13 +628,19 @@ public class Board {
 				pieceCounters[code] = l + 1;
 			}
 		}
+		
+		countedPieces = true;
 	}
 	
 	public int getPieceAmount(int code) {
+		if(!countedPieces) countPieces();
+		
 		return pieceCounters[code];
 	}
 	
 	public int getPieceIndex(int code, int i) {
+		if(!countedPieces) countPieces();
+		
 		return pieceIndices[code][i];
 	}
 	
@@ -600,15 +654,15 @@ public class Board {
 		
 		int phase = totalPhase;
 		
-		phase -= pieceCounters[PieceCode.getSpriteCode(PieceCode.WHITE, PieceCode.KNIGHT)] * knightPhase;
-		phase -= pieceCounters[PieceCode.getSpriteCode(PieceCode.WHITE, PieceCode.BISHOP)] * bishopPhase;
-		phase -= pieceCounters[PieceCode.getSpriteCode(PieceCode.WHITE, PieceCode.ROOK)] * rookPhase;
-		phase -= pieceCounters[PieceCode.getSpriteCode(PieceCode.WHITE, PieceCode.QUEEN)] * queenPhase;
+		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.WHITE, PieceCode.KNIGHT)) * knightPhase;
+		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.WHITE, PieceCode.BISHOP)) * bishopPhase;
+		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.WHITE, PieceCode.ROOK)) * rookPhase;
+		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.WHITE, PieceCode.QUEEN)) * queenPhase;
 		
-		phase -= pieceCounters[PieceCode.getSpriteCode(PieceCode.BLACK, PieceCode.KNIGHT)] * knightPhase;
-		phase -= pieceCounters[PieceCode.getSpriteCode(PieceCode.BLACK, PieceCode.BISHOP)] * bishopPhase;
-		phase -= pieceCounters[PieceCode.getSpriteCode(PieceCode.BLACK, PieceCode.ROOK)] * rookPhase;
-		phase -= pieceCounters[PieceCode.getSpriteCode(PieceCode.BLACK, PieceCode.QUEEN)] * queenPhase;
+		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.BLACK, PieceCode.KNIGHT)) * knightPhase;
+		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.BLACK, PieceCode.BISHOP)) * bishopPhase;
+		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.BLACK, PieceCode.ROOK)) * rookPhase;
+		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.BLACK, PieceCode.QUEEN)) * queenPhase;
 		
 		return (phase * 256 + (totalPhase / 2)) / totalPhase;
 	}

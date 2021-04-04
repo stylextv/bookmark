@@ -231,7 +231,7 @@ public class BoardUI {
 		initialHold = true;
 	}
 	
-	private static void unselecPiece() {
+	public static void unselecPiece() {
 		selected = -1;
 	}
 	

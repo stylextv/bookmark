@@ -9,6 +9,7 @@ public class TranspositionEntry {
 	public static final int TYPE_UPPER_BOUND = 2;
 	
 	private long key;
+	
 	private int depth;
 	
 	private Move m;

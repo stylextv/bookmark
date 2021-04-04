@@ -12,7 +12,7 @@ public class PositionKey {
 	public static final int CASTLING_OFFSET = 13 * 64 + 1 + 8;
 	
 	static {
-		Random random = new Random(2361912);
+		Random random = new Random(2361912); // 1070372
 		
 		for(int i=0; i<RANDOM_NUMBERS.length; i++) {
 			RANDOM_NUMBERS[i] = random.nextLong();

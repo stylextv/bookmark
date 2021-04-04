@@ -16,7 +16,9 @@ public class AlphaBetaAI {
 	
 	private static final int ALLOCATED_TIME = 3000;
 	
-	private static final int MAX_CHECKING_MOVES_DEPTH = -11;
+	private static final int WINDOW_SIZE = Evaluator.PAWN_VALUE;
+	
+	private static final int NULL_MOVE_R = 2;
 	
 	private static Move responseMove;
 	
@@ -38,7 +40,7 @@ public class AlphaBetaAI {
 		int depth = 1;
 		
 		while(System.currentTimeMillis() - before < ALLOCATED_TIME) {
-			score = startSearch(b, depth);
+			score = startSearch(b, depth, score);
 			
 			System.out.println("depth "+depth+" search complete");
 			
@@ -64,7 +66,20 @@ public class AlphaBetaAI {
 		return responseMove;
 	}
 	
-	private static int startSearch(Board b, int depth) {
+	private static int startSearch(Board b, int depth, int lastScore) {
+		if(depth != 1) {
+			int alpha = lastScore - WINDOW_SIZE;
+			int beta = lastScore + WINDOW_SIZE;
+			
+			int score = runAlphaBeta(b, alpha, beta, depth);
+			
+			if(score > alpha && score < beta) {
+				return score;
+			} else {
+				System.out.println("narrow window failed");
+			}
+		}
+		
 		int score = runAlphaBeta(b, -INFINITY, INFINITY, depth);
 		
 		return score;
@@ -85,6 +100,8 @@ public class AlphaBetaAI {
 			list.applyMoveScore(entry.getMove(), MoveEvaluator.HASH_MOVE_SCORE);
 		}
 		
+		int type = TranspositionEntry.TYPE_UPPER_BOUND;
+		
 		applyKillerMoves(list, b.getHistoryPly());
 		
 		Move bestMove = null;
@@ -95,27 +112,31 @@ public class AlphaBetaAI {
 			b.makeMove(m);
 			
 			if(!b.isOpponentInCheck()) {
-				int score = -alphaBeta(b, 1, -beta, -alpha, depth - 1);
+				int score = -alphaBeta(b, 1, -beta, -alpha, depth - 1, true);
 				
 				if(score > alpha) {
 					bestMove = m;
 					alpha = score;
+					
+					type = TranspositionEntry.TYPE_EXACT;
 				}
 			}
 			
 			b.undoMove(m);
 		}
 		
-		TranspositionTable.putEntry(b.getPositionKey(), depth, 0, bestMove, TranspositionEntry.TYPE_EXACT, alpha, b.getHistoryPly());
+		if(alpha >= beta) type = TranspositionEntry.TYPE_LOWER_BOUND;
+		
+		TranspositionTable.putEntry(b.getPositionKey(), depth, 0, bestMove, type, alpha, b.getHistoryPly());
 		
 		responseMove = bestMove;
 		
 		return alpha;
 	}
 	
-	private static int alphaBeta(Board b, int plyFromRoot, int alpha, int beta, int depth) {
-		if(depth == 0) {
-			return quiesce(b, plyFromRoot, alpha, beta, depth);
+	private static int alphaBeta(Board b, int plyFromRoot, int alpha, int beta, int depth, boolean allowNullMove) {
+		if(depth <= 0) {
+			return quiesce(b, plyFromRoot, alpha, beta);
 		}
 		
 		visitedNormalNodes++;
@@ -137,6 +158,22 @@ public class AlphaBetaAI {
 		}
 		
 		int type = TranspositionEntry.TYPE_UPPER_BOUND;
+		
+		// Null move
+		
+		if(allowNullMove && !b.isSideInCheck()) {
+			b.makeNullMove();
+			
+			int score = -alphaBeta(b, plyFromRoot + 1, -beta, -beta + 1, depth - 1 - NULL_MOVE_R, false);
+			
+			b.undoNullMove();
+			
+			if(score >= beta) {
+				return score;
+			}
+		}
+		
+		// Ordinary search
 		
 		MoveList list = new MoveList();
 		
@@ -163,7 +200,7 @@ public class AlphaBetaAI {
 			if(!b.isOpponentInCheck()) {
 				hasLegalMove = true;
 				
-				int score = -alphaBeta(b, plyFromRoot + 1, -beta, -alpha, depth - 1);
+				int score = -alphaBeta(b, plyFromRoot + 1, -beta, -alpha, depth - 1, true);
 				
 				if(score > bestScore) {
 					bestMove = m;
@@ -211,36 +248,20 @@ public class AlphaBetaAI {
 		return alpha;
 	}
 	
-	private static int quiesce(Board b, int plyFromRoot, int alpha, int beta, int depth) {
+	private static int quiesce(Board b, int plyFromRoot, int alpha, int beta) {
 		visitedQuiesceNodes++;
 		
 		if(b.getFiftyMoveCounter() == 100 || b.hasThreefoldRepetition()) return 0;
 		
-		TranspositionEntry entry = TranspositionTable.getEntry(b.getPositionKey());
-		
-		if(entry != null && entry.getDepth() >= depth) {
-			transpositionUses++;
-			
-			int entryScore = entry.getScore(plyFromRoot);
-			
-			if(entry.getType() == TranspositionEntry.TYPE_EXACT) return entryScore;
-			else if(entry.getType() == TranspositionEntry.TYPE_LOWER_BOUND) alpha = Math.max(alpha, entryScore);
-			else beta = Math.min(beta, entryScore);
-			
-			if(alpha >= beta) return entryScore;
-		}
-		
 		boolean inCheck = b.isSideInCheck();
 		
 		if(!inCheck) {
-			int evalScore = Evaluator.eval(b);
+			int evalScore = Evaluator.eval(b, beta);
 			
 			if(evalScore >= beta) return beta;
 			
 			if(evalScore > alpha) alpha = evalScore;
 		}
-		
-		int type = TranspositionEntry.TYPE_UPPER_BOUND;
 		
 		MoveList list = new MoveList();
 		
@@ -248,21 +269,9 @@ public class AlphaBetaAI {
 		
 		MoveEvaluator.eval(list, b);
 		
-		if(entry != null && entry.getMove() != null) {
-			list.applyMoveScore(entry.getMove(), MoveEvaluator.HASH_MOVE_SCORE);
-		}
-		
 		applyKillerMoves(list, b.getHistoryPly());
 		
-		MoveList checkingMoves = new MoveList();
-		
-		boolean allowCheckingMoves = depth > MAX_CHECKING_MOVES_DEPTH;
-		
 		boolean hasLegalMove = false;
-		boolean hasAlphaRisen = false;
-		
-		Move bestMove = null;
-		int bestScore = Integer.MIN_VALUE;
 		
 		while(list.hasMovesLeft()) {
 			Move m = list.next();
@@ -275,25 +284,14 @@ public class AlphaBetaAI {
 			if(!b.isOpponentInCheck()) {
 				hasLegalMove = true;
 				
-				if(inCheck || m.getCaptured() != 0) {
+				if(inCheck || m.getCaptured() != 0 || m.getPromoted() != 0) {
 					hasDoneMove = true;
 					
-					score = -quiesce(b, plyFromRoot + 1, -beta, -alpha, depth - 1);
-					
-					if(score > bestScore) {
-						bestMove = m;
-						bestScore = score;
-					}
+					score = -quiesce(b, plyFromRoot + 1, -beta, -alpha);
 					
 					if(score > alpha) {
 						alpha = score;
-						
-						hasAlphaRisen = true;
-						
-						type = TranspositionEntry.TYPE_EXACT;
 					}
-				} else if(allowCheckingMoves && !inCheck && b.isSideInCheck()) {
-					checkingMoves.addMove(m);
 				}
 			}
 			
@@ -301,8 +299,6 @@ public class AlphaBetaAI {
 			
 			if(hasDoneMove && score >= beta) {
 				KillerTable.storeMove(m, b.getHistoryPly());
-				
-				TranspositionTable.putEntry(b.getPositionKey(), depth, plyFromRoot, bestMove, TranspositionEntry.TYPE_LOWER_BOUND, beta, b.getHistoryPly());
 				
 				return beta;
 			}
@@ -321,45 +317,8 @@ public class AlphaBetaAI {
 				score = b.getSide() == winner ? i : -i;
 			}
 			
-			TranspositionTable.putEntry(b.getPositionKey(), depth, plyFromRoot, null, TranspositionEntry.TYPE_EXACT, score, b.getHistoryPly());
-			
 			return score;
 		}
-		
-		if(allowCheckingMoves && !inCheck && !hasAlphaRisen) {
-			checkingMoves.reset();
-			
-			while(checkingMoves.hasMovesLeft()) {
-				Move m = checkingMoves.next();
-				
-				b.makeMove(m);
-				
-				int score = -quiesce(b, plyFromRoot + 1, -beta, -alpha, depth - 1);
-				
-				if(bestMove == null || score > bestScore) {
-					bestMove = m;
-					bestScore = score;
-				}
-				
-				if(score > alpha) {
-					alpha = score;
-					
-					type = TranspositionEntry.TYPE_EXACT;
-				}
-				
-				b.undoMove(m);
-				
-				if(score >= beta) {
-					KillerTable.storeMove(m, b.getHistoryPly());
-					
-					TranspositionTable.putEntry(b.getPositionKey(), depth, plyFromRoot, bestMove, TranspositionEntry.TYPE_LOWER_BOUND, beta, b.getHistoryPly());
-					
-					return beta;
-				}
-			}
-		}
-		
-		TranspositionTable.putEntry(b.getPositionKey(), depth, plyFromRoot, bestMove, type, alpha, b.getHistoryPly());
 		
 		return alpha;
 	}

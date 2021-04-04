@@ -60,9 +60,9 @@ public class UIManager {
 		
 		MoveIndicatorUI.drawMoves(graphics, Main.getBoard());
 		
-		BoardUI.drawHeldPiece(graphics);
-		
 		BoardUI.drawBoardCorners(graphics, 66, 66);
+		
+		BoardUI.drawHeldPiece(graphics);
 		
 		PromotionUI.updateDropDown(graphics);
 		
@@ -99,6 +99,8 @@ public class UIManager {
 					BoardUI.setHumanSide(j);
 					
 					BoardUI.clearLastMove();
+					
+					BoardUI.unselecPiece();
 					
 					Main.getBoard().reset();
 					
