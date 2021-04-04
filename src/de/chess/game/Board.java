@@ -10,7 +10,7 @@ public class Board {
 	// sebastian pawn endgame: 8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1
 	// crazy karpov move: r1bqk2r/pp3pp1/2pbpn1p/8/3P3Q/3B1N2/PPP2PPP/R1B1K2R b KQkq - 0 1
 	
-	private static final String STARTING_POSITION = "r1bqk2r/pp3pp1/2pbpn1p/8/3P3Q/3B1N2/PPP2PPP/R1B1K2R b KQkq - 0 1"; // "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+	private static final String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 	
 	private BitBoard[] bitBoards = new BitBoard[PieceCode.LAST + 1];
 	

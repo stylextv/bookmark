@@ -176,24 +176,24 @@ public class MoveGenerator {
 		if(side == PieceCode.WHITE) {
 			
 			if((b.getCastlePerms() & Castling.WHITE_QUEEN_SIDE) == 0) {
-				addCastlingMove(b, list, side, index, Castling.WHITE_QUEEN_SIDE, emptySquares, -1, MoveFlag.CASTLING_QUEEN_SIDE);
+				addCastlingMove(b, list, side, index, emptySquares, -1, MoveFlag.CASTLING_QUEEN_SIDE);
 			}
 			if((b.getCastlePerms() & Castling.WHITE_KING_SIDE) == 0) {
-				addCastlingMove(b, list, side, index, Castling.WHITE_KING_SIDE, emptySquares, 1, MoveFlag.CASTLING_KING_SIDE);
+				addCastlingMove(b, list, side, index, emptySquares, 1, MoveFlag.CASTLING_KING_SIDE);
 			}
 			
 		} else {
 			
 			if((b.getCastlePerms() & Castling.BLACK_QUEEN_SIDE) == 0) {
-				addCastlingMove(b, list, side, index, Castling.BLACK_QUEEN_SIDE, emptySquares, -1, MoveFlag.CASTLING_QUEEN_SIDE);
+				addCastlingMove(b, list, side, index, emptySquares, -1, MoveFlag.CASTLING_QUEEN_SIDE);
 			}
 			if((b.getCastlePerms() & Castling.BLACK_KING_SIDE) == 0) {
-				addCastlingMove(b, list, side, index, Castling.BLACK_KING_SIDE, emptySquares, 1, MoveFlag.CASTLING_KING_SIDE);
+				addCastlingMove(b, list, side, index, emptySquares, 1, MoveFlag.CASTLING_KING_SIDE);
 			}
 		}
 	}
 	
-	private static void addCastlingMove(Board b, MoveList list, int side, int from, int castlingSide, long emptySquares, int dir, int flag) {
+	private static void addCastlingMove(Board b, MoveList list, int side, int from, long emptySquares, int dir, int flag) {
 		int to = from + dir * 2;
 		
 		int square = from;
