@@ -18,7 +18,7 @@ public class Search {
 	
 	private static final int MIN_SEARCH_DEPTH = 4;
 	
-	private static final int WINDOW_SIZE = Evaluator.PAWN_VALUE;
+	private static final int WINDOW_SIZE = Evaluator.GENERIC_PAWN_VALUE;
 	
 	private static final int NULL_MOVE_REDUCTION = 2;
 	
@@ -55,11 +55,11 @@ public class Search {
 		
 		System.out.println("---");
 		System.out.println("time: "+MathUtil.DECIMAL_FORMAT.format(time)+"s");
-		System.out.println("prediction: "+MathUtil.DECIMAL_FORMAT.format(score));
-		System.out.println("visited_nodes: "+MathUtil.DECIMAL_FORMAT.format(visitedNodes));
-		System.out.println("nodes_per_second: "+MathUtil.DECIMAL_FORMAT.format(visitedNodes / time));
-		System.out.println("visited_normal_nodes: "+MathUtil.DECIMAL_FORMAT.format(visitedNormalNodes));
-		System.out.println("visited_quiesce_nodes: "+MathUtil.DECIMAL_FORMAT.format(visitedQuiesceNodes));
+		System.out.println("eval: "+MathUtil.DECIMAL_FORMAT.format(score));
+		System.out.println("nodes: "+MathUtil.DECIMAL_FORMAT.format(visitedNodes));
+		System.out.println("knodes/s: "+MathUtil.DECIMAL_FORMAT.format(visitedNodes / 1000f / time));
+		System.out.println("normal_nodes: "+MathUtil.DECIMAL_FORMAT.format(visitedNormalNodes));
+		System.out.println("quiesce_nodes: "+MathUtil.DECIMAL_FORMAT.format(visitedQuiesceNodes));
 		System.out.println("transposition_uses: "+MathUtil.DECIMAL_FORMAT.format(transpositionUses));
 		
 		WidgetUI.setPrediction(score);
@@ -294,7 +294,7 @@ public class Search {
 		boolean inCheck = b.isSideInCheck();
 		
 		if(!inCheck) {
-			int evalScore = Evaluator.eval(b, beta);
+			int evalScore = Evaluator.eval(b, b.getSide());
 			
 			if(evalScore >= beta) return beta;
 			

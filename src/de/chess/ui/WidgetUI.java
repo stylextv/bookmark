@@ -168,7 +168,7 @@ public class WidgetUI {
 			s = "M" + moves;
 			
 		} else {
-			float pawns = (float) Math.abs(i) / Evaluator.PAWN_VALUE;
+			float pawns = (float) Math.abs(i) / Evaluator.GENERIC_PAWN_VALUE;
 			
 			s = MathUtil.DISPLAY_DECIMAL_FORMAT.format(pawns);
 		}
