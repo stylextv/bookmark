@@ -1,4 +1,4 @@
-package de.chess.perft;
+package de.chess.test;
 
 import de.chess.game.Board;
 import de.chess.game.LookupTable;

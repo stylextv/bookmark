@@ -8,7 +8,7 @@ import de.chess.game.Winner;
 import de.chess.ui.WidgetUI;
 import de.chess.util.MathUtil;
 
-public class AlphaBetaAI {
+public class Search {
 	
 	private static final int INFINITY = 1000000;
 	
@@ -16,9 +16,11 @@ public class AlphaBetaAI {
 	
 	private static final int ALLOCATED_TIME = 3000;
 	
+	private static final int MIN_SEARCH_DEPTH = 4;
+	
 	private static final int WINDOW_SIZE = Evaluator.PAWN_VALUE;
 	
-	private static final int NULL_MOVE_R = 2;
+	private static final int NULL_MOVE_REDUCTION = 2;
 	
 	private static Move responseMove;
 	
@@ -39,7 +41,7 @@ public class AlphaBetaAI {
 		
 		int depth = 1;
 		
-		while(System.currentTimeMillis() - before < ALLOCATED_TIME) {
+		while(depth <= MIN_SEARCH_DEPTH || System.currentTimeMillis() - before < ALLOCATED_TIME) {
 			score = startSearch(b, depth, score);
 			
 			System.out.println("depth "+depth+" search complete");
@@ -143,6 +145,8 @@ public class AlphaBetaAI {
 		
 		if(b.getFiftyMoveCounter() == 100 || b.hasThreefoldRepetition()) return 0;
 		
+		// TT lookup
+		
 		TranspositionEntry entry = TranspositionTable.getEntry(b.getPositionKey());
 		
 		if(entry != null && entry.getDepth() >= depth) {
@@ -159,12 +163,16 @@ public class AlphaBetaAI {
 		
 		int type = TranspositionEntry.TYPE_UPPER_BOUND;
 		
+		int newDepth = depth - 1;
+		
 		// Null move
 		
-		if(allowNullMove && !b.isSideInCheck()) {
+		boolean inCheck = b.isSideInCheck();
+		
+		if(allowNullMove && !inCheck) {
 			b.makeNullMove();
 			
-			int score = -alphaBeta(b, plyFromRoot + 1, -beta, -beta + 1, depth - 1 - NULL_MOVE_R, false);
+			int score = -alphaBeta(b, plyFromRoot + 1, -beta, -beta + 1, newDepth - NULL_MOVE_REDUCTION, false);
 			
 			b.undoNullMove();
 			
@@ -192,6 +200,8 @@ public class AlphaBetaAI {
 		Move bestMove = null;
 		int bestScore = Integer.MIN_VALUE;
 		
+		int moveCount = 0;
+		
 		while(list.hasMovesLeft()) {
 			Move m = list.next();
 			
@@ -200,7 +210,35 @@ public class AlphaBetaAI {
 			if(!b.isOpponentInCheck()) {
 				hasLegalMove = true;
 				
-				int score = -alphaBeta(b, plyFromRoot + 1, -beta, -alpha, depth - 1, true);
+				moveCount++;
+				
+				int score = 0;
+				
+				boolean doFullDepthSearch = true;
+				
+				boolean captureOrPromotion = m.getCaptured() != 0 || m.getPromoted() != 0;
+				
+				// Late move reduction
+				
+				if(moveCount > 1) {
+					
+					if(depth > 2 && !inCheck && !captureOrPromotion && !b.isSideInCheck()) {
+						int r = 1;
+						
+						int d = newDepth - r;
+						
+						if(d < 1) d = 1;
+						else if(d > newDepth) d = newDepth;
+						
+						score = -alphaBeta(b, plyFromRoot + 1, -beta, -alpha, d, true);
+						
+						doFullDepthSearch = score > alpha && d < newDepth;
+					}
+				}
+				
+				if(doFullDepthSearch) {
+					score = -alphaBeta(b, plyFromRoot + 1, -beta, -alpha, newDepth, true);
+				}
 				
 				if(score > bestScore) {
 					bestMove = m;

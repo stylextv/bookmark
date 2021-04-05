@@ -1,8 +1,8 @@
 package de.chess.game;
 
-import de.chess.ai.AlphaBetaAI;
 import de.chess.ai.OpeningBook;
 import de.chess.ai.OpeningPosition;
+import de.chess.ai.Search;
 import de.chess.ui.WidgetUI;
 
 public class Board {
@@ -448,7 +448,7 @@ public class Board {
 			return m;
 		}
 		
-		Move m = AlphaBetaAI.findNextMove(this);
+		Move m = Search.findNextMove(this);
 		
 		makeMove(m);
 		

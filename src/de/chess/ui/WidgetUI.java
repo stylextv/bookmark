@@ -5,6 +5,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
 import de.chess.ai.Evaluator;
+import de.chess.ai.Search;
 import de.chess.game.Board;
 import de.chess.game.BoardConstants;
 import de.chess.game.PieceCode;
@@ -15,7 +16,7 @@ import de.chess.util.MathUtil;
 
 public class WidgetUI {
 	
-	private static final int EVAL_RANGE = 2730;
+	private static final int EVAL_RANGE = 2500;
 	
 	private static final int[] DEFAULT_PIECE_AMOUNT = new int[] {
 			0,
@@ -155,9 +156,7 @@ public class WidgetUI {
 	private static String getPredictionText(int i, int side) {
 		String s;
 		
-		int a = Math.abs(i);
-		
-		if(a > 10000) {
+		if(Search.isMateScore(i)) {
 			int moves;
 			
 			if(i > 0) {
@@ -169,7 +168,7 @@ public class WidgetUI {
 			s = "M" + moves;
 			
 		} else {
-			float pawns = (float) a / Evaluator.PAWN_VALUE;
+			float pawns = (float) Math.abs(i) / Evaluator.PAWN_VALUE;
 			
 			s = MathUtil.DISPLAY_DECIMAL_FORMAT.format(pawns);
 		}

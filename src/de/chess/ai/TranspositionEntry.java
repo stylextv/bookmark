@@ -54,7 +54,7 @@ public class TranspositionEntry {
 	}
 	
 	private static int correctMateScore(int score, int plyFromRoot) {
-		if(AlphaBetaAI.isMateScore(score)) {
+		if(Search.isMateScore(score)) {
 			int sign = 0;
 			
 			if(score > 0) sign = 1;
@@ -67,7 +67,7 @@ public class TranspositionEntry {
 	}
 	
 	private static int readjustMateScore(int score, int plyFromRoot) {
-		if(AlphaBetaAI.isMateScore(score)) {
+		if(Search.isMateScore(score)) {
 			int sign = 0;
 			
 			if(score > 0) sign = 1;
