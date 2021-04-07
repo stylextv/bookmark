@@ -32,7 +32,7 @@ public class BitOperations {
 	}
 	
 	public static int bitScanForward(long l) {
-		int i = (int)(((l & -l) * DE_BRUIJN_CONSTANT) >>> 58);
+		int i = (int) (((l & -l) * DE_BRUIJN_CONSTANT) >>> 58);
 		
 		return MAGIC_TABLE[i];
 	}

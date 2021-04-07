@@ -58,9 +58,9 @@ public class Board {
 //		LookupTable.initTables();
 		
 //		System.out.println("---");
-//		System.out.println(Evaluator.evalPawnStructure(this, PieceCode.WHITE, false));
+//		System.out.println(Evaluator.evalPawnStructure(this, PieceCode.WHITE, true));
 //		System.out.println("---");
-//		System.out.println(Evaluator.evalPawnStructure(this, PieceCode.BLACK, false));
+//		System.out.println(Evaluator.evalPawnStructure(this, PieceCode.BLACK, true));
 	}
 	
 	public void parseFen(String fen) {

@@ -486,7 +486,7 @@ public class Evaluator {
 				int bonus = CONNECTED_PAWNS_BONUS[rank - 2] * (2 + (isPhalanx ? 1 : 0) - (isOpposed ? 1 : 0)) + 21 * supporterCount;
 				
 				if(eg) {
-					bonus *= (rank - 3) / 4;
+					bonus = bonus * (rank - 3) / 4;
 				}
 				
 				score += bonus;
