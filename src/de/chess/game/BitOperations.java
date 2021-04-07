@@ -2,7 +2,12 @@ package de.chess.game;
 
 public class BitOperations {
 	
-	private static final long DE_BRUIJN_CONSTANT = 0x03f79d71b4cb0a89L;
+	public static final int SHIFT_LEFT = -1;
+	public static final int SHIFT_RIGHT = 1;
+	public static final int SHIFT_UP = -8;
+	public static final int SHIFT_DOWN = 8;
+	
+	private static final long DE_BRUIJN_CONSTANT = 0x03f79d71b4cb0a89l;
 	
 	private static final int[] MAGIC_TABLE = {
 			0,  1,  48,  2, 57, 49, 28,  3,
@@ -14,6 +19,13 @@ public class BitOperations {
 			46, 26, 40, 15, 34, 20, 31, 10,
 			25, 14, 19,  9, 13,  8,  7,  6
 	};
+	
+	public static long shift(long l, int dir) {
+		if(dir == 0) return l;
+		
+		if(dir > 0) return l << dir;
+		return l >>> -dir;
+	}
 	
 	public static long inverse(long l) {
 		return ~l;

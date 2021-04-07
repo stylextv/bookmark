@@ -22,6 +22,10 @@ public class Board {
 	
 	private boolean countedPieces;
 	
+	private long[] attackedSquares = new long[12];
+	
+	private boolean calculatedAttacks;
+	
 	private int side;
 	
 	private int historyPly;
@@ -51,14 +55,12 @@ public class Board {
 	public void reset() {
 		parseFen(STARTING_POSITION);
 		
-		LookupTable.initTables();
+//		LookupTable.initTables();
 		
-//		int endgameWeight = getEndgameWeight();
-//		int normalWeight = 256 - endgameWeight;
-		
-//		long occupiedSquares = getBitBoard(PieceCode.WHITE).orReturn(getBitBoard(PieceCode.BLACK));
-		
-//		System.out.println(Evaluator.eval(this, 1000000));
+//		System.out.println("---");
+//		System.out.println(Evaluator.evalPawnStructure(this, PieceCode.WHITE, false));
+//		System.out.println("---");
+//		System.out.println(Evaluator.evalPawnStructure(this, PieceCode.BLACK, false));
 	}
 	
 	public void parseFen(String fen) {
@@ -99,6 +101,8 @@ public class Board {
 		}
 		
 		countedPieces = false;
+		
+		calculatedAttacks = false;
 		
 		if(split[1].equals("w")) side = PieceCode.WHITE;
 		else side = PieceCode.BLACK;
@@ -313,6 +317,8 @@ public class Board {
 		
 		countedPieces = false;
 		
+		calculatedAttacks = false;
+		
 		side = opponentSide;
 		positionKey ^= PositionKey.getRandomNumber(PositionKey.SIDE_OFFSET);
 	}
@@ -372,6 +378,8 @@ public class Board {
 		}
 		
 		countedPieces = false;
+		
+		calculatedAttacks = false;
 		
 		positionKey = u.getPositionKey();
 	}
@@ -466,63 +474,242 @@ public class Board {
 	private boolean isInCheck(int side) {
 		long kingSquares = getBitBoard(side).andReturn(getBitBoard(PieceCode.KING));
 		
-		int index = BitOperations.bitScanForward(kingSquares);
+		int square = BitOperations.bitScanForward(kingSquares);
 		
-		return isUnderAttack(index, side);
+		return isUnderAttack(square, side);
 	}
 	
 	public boolean isUnderAttack(int square, int defenderSide) {
-		int attackerSide = (defenderSide + 1) % 2;
+		long mask = BoardConstants.BIT_SET[square];
 		
-		long knights = getBitBoard(attackerSide).andReturn(getBitBoard(PieceCode.KNIGHT));
-		
-		if((LookupTable.KNIGHT_MOVES[square] & knights) != 0) {
-			return true;
-		}
-		
-		long king = getBitBoard(attackerSide).andReturn(getBitBoard(PieceCode.KING));
-		
-		if((LookupTable.KING_MOVES[square] & king) != 0) {
-			return true;
-		}
-		
-		long pawns = getBitBoard(attackerSide).andReturn(getBitBoard(PieceCode.PAWN));
-		
-		int dir = -8;
-		if(attackerSide == PieceCode.WHITE) dir = 8;
-		
-		int j = square + dir;
-		
-		if(j > 7 && j < 56) {
-			int squareX = square % 8;
-			
-			if(squareX > 0 && (BoardConstants.BIT_SET[square - 1 + dir] & pawns) != 0) {
-				return true;
-			}
-			if(squareX < 7 && (BoardConstants.BIT_SET[square + 1 + dir] & pawns) != 0) {
-				return true;
-			}
-		}
-		
-		long occupiedSquares = getBitBoard(defenderSide).orReturn(getBitBoard(attackerSide));
-		
-		if(checkSliderMoves(square, attackerSide, occupiedSquares, PieceCode.BISHOP, LookupTable.RELEVANT_BISHOP_MOVES, LookupTable.BISHOP_MAGIC_VALUES, LookupTable.BISHOP_MAGIC_INDEX_BITS, LookupTable.BISHOP_MOVES)) {
-			return true;
-		}
-		
-		if(checkSliderMoves(square, attackerSide, occupiedSquares, PieceCode.ROOK, LookupTable.RELEVANT_ROOK_MOVES, LookupTable.ROOK_MAGIC_VALUES, LookupTable.ROOK_MAGIC_INDEX_BITS, LookupTable.ROOK_MOVES)) {
-			return true;
-		}
-		
-		return false;
+		return (attackedBy((defenderSide + 1) % 2, PieceCode.ALL_PIECES) & mask) != 0;
 	}
 	
-	private boolean checkSliderMoves(int square, int side, long occupiedSquares, int type, long[] moveTable, long[] magicValues, int[] magicIndices, long[][] finalMoveTable) {
-		long squares = getBitBoard(side).andReturn(getBitBoard(type).orReturn(getBitBoard(PieceCode.QUEEN)));
+	private void countPieces() {
+		if(countedPieces) return;
 		
-		long moves = MoveGenerator.getSliderMoves(square, occupiedSquares, moveTable, magicValues, magicIndices, finalMoveTable);
+		for(int i=0; i<pieceCounters.length; i++) {
+			pieceCounters[i] = 0;
+		}
 		
-		return (moves & squares) != 0;
+		for(int i=0; i<64; i++) {
+			int code = pieces[i];
+			
+			if(code != -1) {
+				int l = pieceCounters[code];
+				
+				pieceIndices[code][l] = i;
+				
+				pieceCounters[code] = l + 1;
+			}
+		}
+		
+		countedPieces = true;
+	}
+	
+	public int getPieceAmount(int side, int type) {
+		if(side == PieceCode.BOTH_SIDES) return getPieceAmount(PieceCode.WHITE, type) + getPieceAmount(PieceCode.BLACK, type);
+		
+		if(type != PieceCode.ALL_PIECES) return getPieceAmount(PieceCode.getSpriteCode(side, type));
+		
+		int count = 0;
+		
+		for(int i = PieceCode.PAWN; i <= PieceCode.KING; i++) {
+			count += getPieceAmount(PieceCode.getSpriteCode(side, i));
+		}
+		
+		return count;
+	}
+	
+	public int getPieceAmount(int code) {
+		countPieces();
+		
+		return pieceCounters[code];
+	}
+	
+	public int getPieceIndex(int code, int i) {
+		countPieces();
+		
+		return pieceIndices[code][i];
+	}
+	
+	private void calculateAttacks() {
+		if(calculatedAttacks) return;
+		
+		long occupiedSquares = getBitBoard(PieceCode.WHITE).orReturn(getBitBoard(PieceCode.BLACK));
+		
+		calculatePawnAttacks(PieceCode.WHITE, BitOperations.SHIFT_UP);
+		calculatePawnAttacks(PieceCode.BLACK, BitOperations.SHIFT_DOWN);
+		
+		calculateKnightAttacks(PieceCode.WHITE);
+		calculateKnightAttacks(PieceCode.BLACK);
+		
+		calculateBishopAttacks(PieceCode.WHITE, occupiedSquares);
+		calculateBishopAttacks(PieceCode.BLACK, occupiedSquares);
+		
+		calculateRookAttacks(PieceCode.WHITE, occupiedSquares);
+		calculateRookAttacks(PieceCode.BLACK, occupiedSquares);
+		
+		calculateQueenAttacks(PieceCode.WHITE, occupiedSquares);
+		calculateQueenAttacks(PieceCode.BLACK, occupiedSquares);
+		
+		calculateKingAttacks(PieceCode.WHITE);
+		calculateKingAttacks(PieceCode.BLACK);
+		
+		calculatedAttacks = true;
+	}
+	
+	private void calculatePawnAttacks(int side, int dir) {
+		int code = PieceCode.getSpriteCode(side, PieceCode.PAWN);
+		
+		long squares = getBitBoard(side).andReturn(getBitBoard(PieceCode.PAWN));
+		
+		squares = BitOperations.shift(squares, dir);
+		
+		long attacksLeft = BitOperations.shift(squares, BitOperations.SHIFT_LEFT);
+		long attacksRight = BitOperations.shift(squares, BitOperations.SHIFT_RIGHT);
+		
+		attacksLeft &= BitOperations.inverse(BitBoard.FILE_H);
+		attacksRight &= BitOperations.inverse(BitBoard.FILE_A);
+		
+		attackedSquares[code] = attacksLeft | attacksRight;
+	}
+	
+	private void calculateKnightAttacks(int side) {
+		int code = PieceCode.getSpriteCode(side, PieceCode.KNIGHT);
+		
+		long squares = getBitBoard(side).andReturn(getBitBoard(PieceCode.KNIGHT));
+		
+		long attacks = 0;
+		
+		while(squares != 0) {
+			int square = BitOperations.bitScanForward(squares);
+			
+			long moves = LookupTable.KNIGHT_MOVES[square];
+			
+			attacks |= moves;
+			
+			squares ^= BoardConstants.BIT_SET[square];
+		}
+		
+		attackedSquares[code] = attacks;
+	}
+	
+	private void calculateBishopAttacks(int side, long occupiedSquares) {
+		int code = PieceCode.getSpriteCode(side, PieceCode.BISHOP);
+		
+		long squares = getBitBoard(side).andReturn(getBitBoard(PieceCode.BISHOP));
+		
+		long attacks = 0;
+		
+		while(squares != 0) {
+			int square = BitOperations.bitScanForward(squares);
+			
+			long moves = MoveGenerator.getSliderMoves(square, occupiedSquares, LookupTable.RELEVANT_BISHOP_MOVES, LookupTable.BISHOP_MAGIC_VALUES, LookupTable.BISHOP_MAGIC_INDEX_BITS, LookupTable.BISHOP_MOVES);
+			
+			attacks |= moves;
+			
+			squares ^= BoardConstants.BIT_SET[square];
+		}
+		
+		attackedSquares[code] = attacks;
+	}
+	
+	private void calculateRookAttacks(int side, long occupiedSquares) {
+		int code = PieceCode.getSpriteCode(side, PieceCode.ROOK);
+		
+		long squares = getBitBoard(side).andReturn(getBitBoard(PieceCode.ROOK));
+		
+		long attacks = 0;
+		
+		while(squares != 0) {
+			int square = BitOperations.bitScanForward(squares);
+			
+			long moves = MoveGenerator.getSliderMoves(square, occupiedSquares, LookupTable.RELEVANT_ROOK_MOVES, LookupTable.ROOK_MAGIC_VALUES, LookupTable.ROOK_MAGIC_INDEX_BITS, LookupTable.ROOK_MOVES);
+			
+			attacks |= moves;
+			
+			squares ^= BoardConstants.BIT_SET[square];
+		}
+		
+		attackedSquares[code] = attacks;
+	}
+	
+	private void calculateQueenAttacks(int side, long occupiedSquares) {
+		int code = PieceCode.getSpriteCode(side, PieceCode.QUEEN);
+		
+		long squares = getBitBoard(side).andReturn(getBitBoard(PieceCode.QUEEN));
+		
+		long attacks = 0;
+		
+		while(squares != 0) {
+			int square = BitOperations.bitScanForward(squares);
+			
+			long moves = MoveGenerator.getSliderMoves(square, occupiedSquares, LookupTable.RELEVANT_ROOK_MOVES, LookupTable.ROOK_MAGIC_VALUES, LookupTable.ROOK_MAGIC_INDEX_BITS, LookupTable.ROOK_MOVES);
+			
+			moves |= MoveGenerator.getSliderMoves(square, occupiedSquares, LookupTable.RELEVANT_BISHOP_MOVES, LookupTable.BISHOP_MAGIC_VALUES, LookupTable.BISHOP_MAGIC_INDEX_BITS, LookupTable.BISHOP_MOVES);
+			
+			attacks |= moves;
+			
+			squares ^= BoardConstants.BIT_SET[square];
+		}
+		
+		attackedSquares[code] = attacks;
+	}
+	
+	private void calculateKingAttacks(int side) {
+		int code = PieceCode.getSpriteCode(side, PieceCode.KING);
+		
+		long squares = getBitBoard(side).andReturn(getBitBoard(PieceCode.KING));
+		
+		int square = BitOperations.bitScanForward(squares);
+		
+		long moves = LookupTable.KING_MOVES[square];
+		
+		attackedSquares[code] = moves;
+	}
+	
+	public long attackedBy(int side, int type) {
+		if(side == PieceCode.BOTH_SIDES) return attackedBy(PieceCode.WHITE, type) | attackedBy(PieceCode.BLACK, type);
+		
+		if(type != PieceCode.ALL_PIECES) return attackedBy(PieceCode.getSpriteCode(side, type));
+		
+		long attacks = 0;
+		
+		for(int i = PieceCode.PAWN; i <= PieceCode.KING; i++) {
+			attacks |= attackedBy(PieceCode.getSpriteCode(side, i));
+		}
+		
+		return attacks;
+	}
+	
+	public long attackedBy(int code) {
+		calculateAttacks();
+		
+		return attackedSquares[code];
+	}
+	
+	public int getEndgameWeight() {
+		int knightPhase = 1;
+		int bishopPhase = 1;
+		int rookPhase = 2;
+		int queenPhase = 4;
+		
+		int totalPhase = knightPhase*4 + bishopPhase*4 + rookPhase*4 + queenPhase*2;
+		
+		int phase = totalPhase;
+		
+		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.WHITE, PieceCode.KNIGHT)) * knightPhase;
+		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.WHITE, PieceCode.BISHOP)) * bishopPhase;
+		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.WHITE, PieceCode.ROOK)) * rookPhase;
+		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.WHITE, PieceCode.QUEEN)) * queenPhase;
+		
+		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.BLACK, PieceCode.KNIGHT)) * knightPhase;
+		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.BLACK, PieceCode.BISHOP)) * bishopPhase;
+		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.BLACK, PieceCode.ROOK)) * rookPhase;
+		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.BLACK, PieceCode.QUEEN)) * queenPhase;
+		
+		return (phase * 256 + (totalPhase / 2)) / totalPhase;
 	}
 	
 	private void removeCastlePerms(int side) {
@@ -610,61 +797,6 @@ public class Board {
 		}
 		
 		return false;
-	}
-	
-	private void countPieces() {
-		for(int i=0; i<pieceCounters.length; i++) {
-			pieceCounters[i] = 0;
-		}
-		
-		for(int i=0; i<64; i++) {
-			int code = pieces[i];
-			
-			if(code != -1) {
-				int l = pieceCounters[code];
-				
-				pieceIndices[code][l] = i;
-				
-				pieceCounters[code] = l + 1;
-			}
-		}
-		
-		countedPieces = true;
-	}
-	
-	public int getPieceAmount(int code) {
-		if(!countedPieces) countPieces();
-		
-		return pieceCounters[code];
-	}
-	
-	public int getPieceIndex(int code, int i) {
-		if(!countedPieces) countPieces();
-		
-		return pieceIndices[code][i];
-	}
-	
-	public int getEndgameWeight() {
-		int knightPhase = 1;
-		int bishopPhase = 1;
-		int rookPhase = 2;
-		int queenPhase = 4;
-		
-		int totalPhase = knightPhase*4 + bishopPhase*4 + rookPhase*4 + queenPhase*2;
-		
-		int phase = totalPhase;
-		
-		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.WHITE, PieceCode.KNIGHT)) * knightPhase;
-		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.WHITE, PieceCode.BISHOP)) * bishopPhase;
-		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.WHITE, PieceCode.ROOK)) * rookPhase;
-		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.WHITE, PieceCode.QUEEN)) * queenPhase;
-		
-		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.BLACK, PieceCode.KNIGHT)) * knightPhase;
-		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.BLACK, PieceCode.BISHOP)) * bishopPhase;
-		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.BLACK, PieceCode.ROOK)) * rookPhase;
-		phase -= getPieceAmount(PieceCode.getSpriteCode(PieceCode.BLACK, PieceCode.QUEEN)) * queenPhase;
-		
-		return (phase * 256 + (totalPhase / 2)) / totalPhase;
 	}
 	
 	public int findWinner() {

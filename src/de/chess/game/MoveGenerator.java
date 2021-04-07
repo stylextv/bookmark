@@ -4,9 +4,6 @@ import java.util.ArrayList;
 
 public class MoveGenerator {
 	
-	private static final long PAWN_DOUBLEMOVE_WHITE = 280375465082880l;
-	private static final long PAWN_DOUBLEMOVE_BLACK = 16711680;
-	
 	public static final int[] KING_START_POSITION = new int[] {
 			60, 4
 	};
@@ -44,9 +41,14 @@ public class MoveGenerator {
 	private static void addPawnMoves(Board b, MoveList list, int side, int opponentSide, int facing, long emptySquares) {
 		long pawnSquares = b.getBitBoard(side).andReturn(b.getBitBoard(PieceCode.PAWN));
 		
+		int forward;
+		
+		if(side == PieceCode.WHITE) forward = BitOperations.SHIFT_UP;
+		else forward = BitOperations.SHIFT_DOWN;
+		
 		long pawnMoves = pawnSquares;
-		if(side == PieceCode.WHITE) pawnMoves >>>= 8;
-		else pawnMoves <<= 8;
+		
+		pawnMoves = BitOperations.shift(pawnMoves, forward);
 		
 		long possiblePawnMoves = pawnMoves & emptySquares;
 		
@@ -61,11 +63,10 @@ public class MoveGenerator {
 		}
 		
 		long possiblePawnDoubleMoves = possiblePawnMoves;
-		if(side == PieceCode.WHITE) possiblePawnDoubleMoves &= PAWN_DOUBLEMOVE_WHITE;
-		else possiblePawnDoubleMoves &= PAWN_DOUBLEMOVE_BLACK;
+		if(side == PieceCode.WHITE) possiblePawnDoubleMoves &= BitBoard.RANK_3;
+		else possiblePawnDoubleMoves &= BitBoard.RANK_6;
 		
-		if(side == PieceCode.WHITE) possiblePawnDoubleMoves >>>= 8;
-		else possiblePawnDoubleMoves <<= 8;
+		possiblePawnDoubleMoves = BitOperations.shift(possiblePawnDoubleMoves, forward);
 		
 		possiblePawnDoubleMoves = possiblePawnDoubleMoves & emptySquares;
 		
@@ -79,21 +80,22 @@ public class MoveGenerator {
 		
 		long opponentSquares = b.getBitBoard(opponentSide).getValue();
 		
-		long pawnAttacksLeft = (pawnMoves << 1);
-		long pawnAttacksRight = (pawnMoves >>> 1);
+		long pawnAttacksLeft = BitOperations.shift(pawnMoves, BitOperations.SHIFT_LEFT);
+		long pawnAttacksRight = BitOperations.shift(pawnMoves, BitOperations.SHIFT_RIGHT);
+		
+		pawnAttacksLeft &= BitOperations.inverse(BitBoard.FILE_H);
+		pawnAttacksRight &= BitOperations.inverse(BitBoard.FILE_A);
 		
 		int enPassant = b.getEnPassant();
 		
 		if(enPassant != BoardSquare.NONE) {
 			long moveTo = BoardConstants.BIT_SET[enPassant];
 			
-			int enPassantX = enPassant % 8;
-			
-			if(enPassantX != 0 && (pawnAttacksLeft & moveTo) != 0) {
-				list.addMove(enPassant - 8 * facing - 1, enPassant, 0, 0, MoveFlag.EN_PASSANT);
-			}
-			if(enPassantX != 7 && (pawnAttacksRight & moveTo) != 0) {
+			if((pawnAttacksLeft & moveTo) != 0) {
 				list.addMove(enPassant - 8 * facing + 1, enPassant, 0, 0, MoveFlag.EN_PASSANT);
+			}
+			if((pawnAttacksRight & moveTo) != 0) {
+				list.addMove(enPassant - 8 * facing - 1, enPassant, 0, 0, MoveFlag.EN_PASSANT);
 			}
 		}
 		
@@ -103,18 +105,14 @@ public class MoveGenerator {
 		while(pawnAttacksLeft != 0) {
 			int index = BitOperations.bitScanForward(pawnAttacksLeft);
 			
-			if(index % 8 != 0) {
-				addPawnMove(list, side, index - 8 * facing - 1, index, b.getPieceType(index), MoveFlag.NONE);
-			}
+			addPawnMove(list, side, index - 8 * facing + 1, index, b.getPieceType(index), MoveFlag.NONE);
 			
 			pawnAttacksLeft ^= BoardConstants.BIT_SET[index];
 		}
 		while(pawnAttacksRight != 0) {
 			int index = BitOperations.bitScanForward(pawnAttacksRight);
 			
-			if(index % 8 != 7) {
-				addPawnMove(list, side, index - 8 * facing + 1, index, b.getPieceType(index), MoveFlag.NONE);
-			}
+			addPawnMove(list, side, index - 8 * facing - 1, index, b.getPieceType(index), MoveFlag.NONE);
 			
 			pawnAttacksRight ^= BoardConstants.BIT_SET[index];
 		}

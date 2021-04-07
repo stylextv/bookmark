@@ -117,7 +117,7 @@ public class WidgetUI {
 		
 		float h = (lerpedPrediction + EVAL_RANGE) / EVAL_RANGE / 2 * Constants.BOARD_SIZE;
 		
-		float f = 0.05f;
+		float f = 0.075f;
 		
 		if(h < f) h = 0;
 		else if(h > Constants.BOARD_SIZE - f) h = Constants.BOARD_SIZE;

@@ -26,7 +26,7 @@ public class Search {
 	
 	private static long visitedNormalNodes;
 	private static long visitedQuiesceNodes;
-	private static int transpositionUses;
+	private static long transpositionUses;
 	
 	public static Move findNextMove(Board b) {
 		System.out.println("------");
@@ -69,6 +69,8 @@ public class Search {
 	}
 	
 	private static int startSearch(Board b, int depth, int lastScore) {
+		// Aspiration windows
+		
 		if(depth != 1) {
 			int alpha = lastScore - WINDOW_SIZE;
 			int beta = lastScore + WINDOW_SIZE;
@@ -78,7 +80,7 @@ public class Search {
 			if(score > alpha && score < beta) {
 				return score;
 			} else {
-				System.out.println("narrow window failed");
+				System.out.println("Aspiration window failed");
 			}
 		}
 		
