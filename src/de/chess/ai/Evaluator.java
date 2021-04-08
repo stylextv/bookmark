@@ -211,6 +211,57 @@ public class Evaluator {
 			 0,   1,   2,   3,   4,   5,   6,	7
 	};
 	
+	private static final int[][] QUADRATIC_IMBALANCE_MG = new int[][] {
+		{ 1419},
+		{  101,   37},
+		{   57,  249,  -49},
+		{    0,  118,   10,    0},
+		{  -63,   -5,  100,  132, -246},
+		{ -210,   37,  147,  161, -158,   -9}
+	};
+	
+	private static final int[][] QUADRATIC_IMBALANCE_OPPONENT_MG = new int[][] {
+		{},
+		{   33},
+		{   46,  106},
+		{   75,   59,   60},
+		{   26,    6,   38,  -12},
+		{   97,  100,  -58,  112,  276}
+	};
+	
+	private static final int[][] QUADRATIC_IMBALANCE_EG = new int[][] {
+		{ 1455},
+		{   28,   39},
+		{   64,  187,  -62},
+		{    0,  137,   27,    0},
+		{  -68,    3,   81,  118, -244},
+		{ -211,   14,  141,  105, -174,  -31}
+	};
+	
+	private static final int[][] QUADRATIC_IMBALANCE_OPPONENT_EG = new int[][] {
+		{},
+		{   30},
+		{   18,   84},
+		{   35,   44,   15},
+		{   35,   22,   39,   -2},
+		{   93,  163,  -91,  192,  225}
+	};
+	
+	// make private
+	public static final int[][] MOBILITY_BONUS_MG = new int[][] {
+		{-62, -53, -12,  -4,   3,  13,  22,  28,  33},
+	    {-48, -20,  16,  26,  38,  51,  55,  63,  63,  68,  81,  81,  91,  98},
+	    {-60, -20,   2,   3,   3,  11,  22,  31,  40,  40,  41,  48,  57,  57,  62},
+	    {-30, -12,  -8,  -9,  20,  23,  23,  35,  38,  53,  64,  65,  65,  66,  67,  67,  72,  72,  77,  79,  93, 108, 108, 108, 110, 114, 114, 116}
+	};
+	
+	private static final int[][] MOBILITY_BONUS_EG = new int[][] {
+		{-81, -56, -31, -16,   5,  11,  17,  20,  25},
+	    {-59, -23,  -3,  13,  24,  42,  54,  57,  65,  73,  78,  86,  88,  97},
+	    {-78, -17,  23,  39,  70,  99, 103, 121, 134, 139, 158, 164, 168, 169, 172},
+	    {-48, -30,  -7,  19,  40,  55,  59,  75,  78,  96,  96, 100, 121, 127, 131, 133, 136, 141, 147, 150, 151, 168, 168, 171, 182, 182, 192, 219}
+	};
+	
 	private static final long SPACE_MASK_WHITE = 16954726998343680l;
 	private static final long SPACE_MASK_BLACK = 1010580480;
 	
@@ -225,16 +276,6 @@ public class Evaluator {
 	private static final int[] BLOCKED_PAWNS_PENALTY_EG = new int[] {
 			-4, 4
 	};
-	
-//	private static final int[] ATTACKER_AMOUNT_WEIGHTS = new int[] {
-//			0,
-//			50,
-//			75,
-//			88,
-//			94,
-//			97,
-//			99
-//	};
 	
 	public static int eval(Board b, int side) {
 		int score = eval(b);
@@ -265,11 +306,13 @@ public class Evaluator {
 		
 		score += evalPiecePositions(b, PieceCode.WHITE, TABLES_MG) - evalPiecePositions(b, PieceCode.BLACK, TABLES_MG);
 		
-		score += evalTotalImbalance(b);
+		score += evalTotalImbalance(b, false);
 		
-		score += evalMobility(b, PieceCode.WHITE) - evalMobility(b, PieceCode.BLACK);
+		score += evalMobility(b, PieceCode.WHITE, MOBILITY_BONUS_MG) - evalMobility(b, PieceCode.BLACK, MOBILITY_BONUS_MG);
 		
 		score += evalPawnStructure(b, PieceCode.WHITE, false) - evalPawnStructure(b, PieceCode.BLACK, false);
+		
+		score += evalPassedPawns(b, PieceCode.WHITE, false) - evalPassedPawns(b, PieceCode.BLACK, false);
 		
 		score += evalSpace(b, PieceCode.WHITE) - evalSpace(b, PieceCode.BLACK);
 		
@@ -281,11 +324,13 @@ public class Evaluator {
 		
 		score += evalPiecePositions(b, PieceCode.WHITE, TABLES_EG) - evalPiecePositions(b, PieceCode.BLACK, TABLES_EG);
 		
-		score += evalTotalImbalance(b);
+		score += evalTotalImbalance(b, true);
 		
-		score += evalMobility(b, PieceCode.WHITE) - evalMobility(b, PieceCode.BLACK);
+		score += evalMobility(b, PieceCode.WHITE, MOBILITY_BONUS_EG) - evalMobility(b, PieceCode.BLACK, MOBILITY_BONUS_EG);
 		
 		score += evalPawnStructure(b, PieceCode.WHITE, true) - evalPawnStructure(b, PieceCode.BLACK, true);
+		
+		score += evalPassedPawns(b, PieceCode.WHITE, true) - evalPassedPawns(b, PieceCode.BLACK, true);
 		
 		return score;
 	}
@@ -360,29 +405,105 @@ public class Evaluator {
 		return score;
 	}
 	
-	private static int evalTotalImbalance(Board b) {
-		int score = evalImbalance(b, PieceCode.WHITE) - evalImbalance(b, PieceCode.BLACK);
+	private static int evalTotalImbalance(Board b, boolean endgame) {
+		int[][] table1 = endgame ? QUADRATIC_IMBALANCE_EG : QUADRATIC_IMBALANCE_MG;
+		int[][] table2 = endgame ? QUADRATIC_IMBALANCE_OPPONENT_EG : QUADRATIC_IMBALANCE_OPPONENT_MG;
 		
-		score += evalBishopPair(b, PieceCode.WHITE) - evalBishopPair(b, PieceCode.BLACK);
+		int score = evalImbalance(b, PieceCode.WHITE, table1, table2) - evalImbalance(b, PieceCode.BLACK, table1, table2);
 		
 		return score / 16;
 	}
 	
-	private static int evalImbalance(Board b, int side) {
-		return 0;
-	}
-	
-	private static int evalBishopPair(Board b, int side) {
-		int count = b.getPieceAmount(PieceCode.getSpriteCode(side, PieceCode.BISHOP));
-		
-		return count >= 2 ? 1438 : 0;
-	}
-	
-	private static int evalMobility(Board b, int side) {
+	private static int evalImbalance(Board b, int side, int[][] table1, int[][] table2) {
 		int opponentSide = (side + 1) % 2;
 		
+		int bonus = 0;
 		
+		for(int type1 = PieceCode.BISHOP_PAIR; type1 <= PieceCode.QUEEN; type1++) {
+			if(type1 > PieceCode.BISHOP_PAIR && type1 < PieceCode.PAWN) continue;
+			
+			int count = b.getPieceAmount(side, type1);
+			
+			if(count == 0) continue;
+			
+			int i1 = 0;
+			
+			if(type1 != PieceCode.BISHOP_PAIR) i1 = type1 - PieceCode.PAWN + 1;
+			
+			int v = table1[i1][i1] * count;
+			
+			for(int type2 = PieceCode.BISHOP_PAIR; type2 < type1; type2++) {
+				if(type2 > PieceCode.BISHOP_PAIR && type2 < PieceCode.PAWN) continue;
+				
+				int i2 = 0;
+				
+				if(type2 != PieceCode.BISHOP_PAIR) i2 = type2 - PieceCode.PAWN + 1;
+				
+				v += table1[i1][i2] * b.getPieceAmount(side, type2) + table2[i1][i2] * b.getPieceAmount(opponentSide, type2);
+			}
+			
+			bonus += count * v;
+		}
 		
+		return bonus;
+	}
+	
+	public static int evalMobility(Board b, int side, int[][] tables) {
+		int opponentSide = (side + 1) % 2;
+		
+		long mobilityArea = BitBoard.FULL_BOARD;
+		
+		mobilityArea &= BitOperations.inverse(b.getBitBoard(side).andReturn(b.getBitBoard(PieceCode.KING)));
+		mobilityArea &= BitOperations.inverse(b.getBitBoard(side).andReturn(b.getBitBoard(PieceCode.QUEEN)));
+		
+		mobilityArea &= BitOperations.inverse(b.attackedBy(opponentSide, PieceCode.PAWN));
+		
+		int down = side == PieceCode.WHITE ? BitOperations.SHIFT_DOWN : BitOperations.SHIFT_UP;
+		
+		long friendlyPawns = b.getBitBoard(side).andReturn(b.getBitBoard(PieceCode.PAWN));
+		
+		long blockedSquares = b.getBitBoard(side).orReturn(b.getBitBoard(opponentSide));
+		
+		blockedSquares = BitOperations.shift(blockedSquares, down);
+		
+		long excludedPawns = friendlyPawns & (blockedSquares | BitBoard.getLowerRanks(side == PieceCode.WHITE ? 4 * 8 : 3 * 8, down));
+		
+		mobilityArea &= BitOperations.inverse(excludedPawns);
+		
+		long blockersForKing = 0;
+		
+		mobilityArea &= BitOperations.inverse(blockersForKing);
+		
+//		BitOperations.print(mobilityArea);
+		
+		int score = evalMobility(b, side, tables, PieceCode.KNIGHT, mobilityArea);
+		
+		score += evalMobility(b, side, tables, PieceCode.BISHOP, mobilityArea);
+		score += evalMobility(b, side, tables, PieceCode.ROOK, mobilityArea);
+		score += evalMobility(b, side, tables, PieceCode.QUEEN, mobilityArea);
+		
+		return score;
+	}
+	
+	private static int evalMobility(Board b, int side, int[][] tables, int type, long mobilityArea) {
+		int[] table = tables[type - PieceCode.KNIGHT];
+		
+		int code = PieceCode.getSpriteCode(side, type);
+		
+		int l = b.getPieceAmount(code);
+		
+		int score = 0;
+		
+		for(int i=0; i<l; i++) {
+			int square = b.getPieceIndex(code, i);
+			
+			score += table[countMobility(b, side, type, square, mobilityArea)];
+		}
+		
+		return score;
+	}
+	
+	private static int countMobility(Board b, int side, int type, int square, long mobilityArea) {
 		return 0;
 	}
 	
@@ -396,6 +517,7 @@ public class Evaluator {
 		long mask = side == PieceCode.WHITE ? SPACE_MASK_WHITE : SPACE_MASK_BLACK;
 		
 		long friendlyPawns = b.getBitBoard(side).andReturn(b.getBitBoard(PieceCode.PAWN));
+		long opponentPawns = b.getBitBoard(opponentSide).andReturn(b.getBitBoard(PieceCode.PAWN));
 		
 		long safe = mask & BitOperations.inverse(friendlyPawns) & BitOperations.inverse(b.attackedBy(opponentSide, PieceCode.PAWN));
 		
@@ -406,12 +528,16 @@ public class Evaluator {
 		
 		int bonus = BitOperations.countBits(safe) + BitOperations.countBits(behind & safe & BitOperations.inverse(b.attackedBy(opponentSide, PieceCode.ALL_PIECES)));
 		
-		int weight = b.getPieceAmount(side, PieceCode.ALL_PIECES) - 3 + 0; // Math.min(blockedCount, 9)
+		long doublePawnAttacks = BitBoard.getDoublePawnAttacks(opponentSide, opponentPawns);
+		
+		int blockedCount = BitOperations.countBits(BitOperations.shift(friendlyPawns, -down) & (opponentPawns | doublePawnAttacks));
+		
+		int weight = b.getPieceAmount(side, PieceCode.ALL_PIECES) - 3 + Math.min(blockedCount, 9);
 		
 		return bonus * weight * weight / 16;
 	}
 	
-	private static int evalPawnStructure(Board b, int side, boolean eg) {
+	private static int evalPawnStructure(Board b, int side, boolean endgame) {
 		int score = 0;
 		
 		int opponentSide = (side + 1) % 2;
@@ -419,10 +545,7 @@ public class Evaluator {
 		int code = PieceCode.getSpriteCode(side, PieceCode.PAWN);
 		int opponentCode = PieceCode.getSpriteCode(opponentSide, PieceCode.PAWN);
 		
-		int up;
-		
-		if(side == PieceCode.WHITE) up = BitOperations.SHIFT_UP;
-		else up = BitOperations.SHIFT_DOWN;
+		int up = side == PieceCode.WHITE ? BitOperations.SHIFT_UP : BitOperations.SHIFT_DOWN;
 		
 		long friendlyPawns = b.getBitBoard(side).andReturn(b.getBitBoard(PieceCode.PAWN));
 		long opponentPawns = b.getBitBoard(opponentSide).andReturn(b.getBitBoard(PieceCode.PAWN));
@@ -434,7 +557,7 @@ public class Evaluator {
 		
 		long doubledPawns = BitOperations.shift(friendlyPawns, BitOperations.SHIFT_UP) & friendlyPawns;
 		
-		score -= BitOperations.countBits(doubledPawns) * (eg ? 56 : 11);
+		score -= BitOperations.countBits(doubledPawns) * (endgame ? 56 : 11);
 		
 		for(int i=0; i<b.getPieceAmount(code); i++) {
 			int square = b.getPieceIndex(code, i);
@@ -471,9 +594,9 @@ public class Evaluator {
 			
 			boolean isDoubledIsolated = isIsolated && isDoubled && isOpposed && (upperRanks & adjacentFiles & opponentPawns) == 0;
 			
-			if(isDoubledIsolated) score -= eg ? 56 : 11;
-			else if(isIsolated) score -= eg ? 15 : 5;
-			else if(isBackward) score -= eg ? 24 : 9;
+			if(isDoubledIsolated) score -= endgame ? 56 : 11;
+			else if(isIsolated) score -= endgame ? 15 : 5;
+			else if(isBackward) score -= endgame ? 24 : 9;
 			
 			int rank = square / 8 + 1;
 			
@@ -485,7 +608,7 @@ public class Evaluator {
 				
 				int bonus = CONNECTED_PAWNS_BONUS[rank - 2] * (2 + (isPhalanx ? 1 : 0) - (isOpposed ? 1 : 0)) + 21 * supporterCount;
 				
-				if(eg) {
+				if(endgame) {
 					bonus = bonus * (rank - 3) / 4;
 				}
 				
@@ -493,10 +616,10 @@ public class Evaluator {
 			}
 			
 			if(isWeak && !isOpposed) {
-				score -= eg ? 27 : 13;
+				score -= endgame ? 27 : 13;
 			}
 			
-			if(eg && supportedBy == 0) {
+			if(endgame && supportedBy == 0) {
 				int attackerCount = BitOperations.countBits(opponentPawns & adjacentFiles & BitBoard.getRank(square + up));
 				
 				if(attackerCount == 2) score -= 56;
@@ -505,11 +628,15 @@ public class Evaluator {
 			if((rank == 5 || rank == 6) && blocked) {
 				int blockedAt = rank - 5;
 				
-				score += eg ? BLOCKED_PAWNS_PENALTY_EG[blockedAt] : BLOCKED_PAWNS_PENALTY_MG[blockedAt];
+				score += endgame ? BLOCKED_PAWNS_PENALTY_EG[blockedAt] : BLOCKED_PAWNS_PENALTY_MG[blockedAt];
 			}
 		}
 		
 		return score;
+	}
+	
+	private static int evalPassedPawns(Board b, int side, boolean endgame) {
+		return 0;
 	}
 	
 }

@@ -1,6 +1,7 @@
 package de.chess.ai;
 
 import de.chess.game.Board;
+import de.chess.game.BoardConstants;
 import de.chess.game.Move;
 import de.chess.game.MoveList;
 import de.chess.game.PieceCode;
@@ -22,6 +23,8 @@ public class MoveEvaluator {
 			100, 200, 300, 400, 500, 600
 	};
 	
+	private static final int ATTACKED_BY_PAWN_PENALTY = 300;
+	
 	static {
 		for(int attacker = PieceCode.PAWN; attacker <= PieceCode.KING; attacker++) {
 			for(int victim = PieceCode.PAWN; victim <= PieceCode.KING; victim++) {
@@ -42,8 +45,12 @@ public class MoveEvaluator {
 	}
 	
 	public static void eval(MoveList list, Board b) {
+		int opponentPawnCode = PieceCode.getSpriteCode((b.getSide() + 1) % 2, PieceCode.PAWN);
+		
 		for(int i=0; i<list.getCount(); i++) {
 			Move m = list.getMove(i);
+			
+			int pieceType = b.getPieceType(m.getFrom());
 			
 			int score = 0;
 			
@@ -51,8 +58,15 @@ public class MoveEvaluator {
 				
 				score = TACTICAL_MOVE_SCORE;
 				
-				if(m.getCaptured() != 0) score += MVV_LVA[m.getCaptured()][b.getPieceType(m.getFrom())];
+				if(m.getCaptured() != 0) score += MVV_LVA[m.getCaptured()][pieceType];
 				if(m.getPromoted() != 0) score += VICTIM_SCORES[m.getPromoted()] + 1000;
+			}
+			
+			if(pieceType != PieceCode.PAWN) {
+				
+				boolean attackedByPawns = (b.attackedBy(opponentPawnCode) & BoardConstants.BIT_SET[m.getTo()]) != 0;
+				
+				if(attackedByPawns) score -= ATTACKED_BY_PAWN_PENALTY;
 			}
 			
 			m.setScore(score);

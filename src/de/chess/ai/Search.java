@@ -92,6 +92,8 @@ public class Search {
 	private static int runAlphaBeta(Board b, int alpha, int beta, int depth) {
 		visitedNormalNodes++;
 		
+		int type = TranspositionEntry.TYPE_UPPER_BOUND;
+		
 		MoveList list = new MoveList();
 		
 		MoveGenerator.generateAllMoves(b, list);
@@ -103,8 +105,6 @@ public class Search {
 		if(entry != null && entry.getMove() != null) {
 			list.applyMoveScore(entry.getMove(), MoveEvaluator.HASH_MOVE_SCORE);
 		}
-		
-		int type = TranspositionEntry.TYPE_UPPER_BOUND;
 		
 		applyKillerMoves(list, b.getHistoryPly());
 		

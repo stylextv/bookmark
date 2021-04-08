@@ -20,6 +20,8 @@ public class BitBoard {
 	public static final long RANK_2 = 71776119061217280l;
 	public static final long RANK_1 = -72057594037927936l;
 	
+	public static final long FULL_BOARD = -1;
+	
 	private long value;
 	
 	public BitBoard() {
@@ -97,6 +99,12 @@ public class BitBoard {
 		}
 		
 		return l;
+	}
+	
+	public static long getDoublePawnAttacks(int side, long pawns) {
+		int dir = side == PieceCode.WHITE ? BitOperations.SHIFT_UP : BitOperations.SHIFT_DOWN;
+		
+		return BitOperations.shift(pawns, dir + BitOperations.SHIFT_LEFT) & BitOperations.shift(pawns, dir + BitOperations.SHIFT_RIGHT);
 	}
 	
 }

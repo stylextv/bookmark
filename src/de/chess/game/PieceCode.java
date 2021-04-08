@@ -21,6 +21,8 @@ public class PieceCode {
 	public static final int BOTH_SIDES = 8;
 	public static final int ALL_PIECES = 9;
 	
+	public static final int BISHOP_PAIR = -1;
+	
 	private static final BufferedImage[] SPRITES = new BufferedImage[] {
 			ImageUtil.WHITE_PAWN,
 			ImageUtil.WHITE_KNIGHT,

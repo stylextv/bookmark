@@ -58,9 +58,11 @@ public class Board {
 //		LookupTable.initTables();
 		
 //		System.out.println("---");
-//		System.out.println(Evaluator.evalPawnStructure(this, PieceCode.WHITE, true));
+//		System.out.println(Evaluator.evalMobility(this, PieceCode.WHITE, Evaluator.MOBILITY_BONUS_MG));
 //		System.out.println("---");
-//		System.out.println(Evaluator.evalPawnStructure(this, PieceCode.BLACK, true));
+//		System.out.println(Evaluator.evalMobility(this, PieceCode.BLACK, Evaluator.MOBILITY_BONUS_MG));
+		
+//		System.out.println(Evaluator.evalTotalImbalance(this, false));
 	}
 	
 	public void parseFen(String fen) {
@@ -509,6 +511,8 @@ public class Board {
 	
 	public int getPieceAmount(int side, int type) {
 		if(side == PieceCode.BOTH_SIDES) return getPieceAmount(PieceCode.WHITE, type) + getPieceAmount(PieceCode.BLACK, type);
+		
+		if(type == PieceCode.BISHOP_PAIR) return getPieceAmount(side, PieceCode.BISHOP) > 1 ? 1 : 0;
 		
 		if(type != PieceCode.ALL_PIECES) return getPieceAmount(PieceCode.getSpriteCode(side, type));
 		
